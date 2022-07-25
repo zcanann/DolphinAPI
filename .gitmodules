@@ -1,3 +1,6 @@
 [submodule "dolphin"]
 	path = dolphin
 	url = git@github.com:dolphin-emu/dolphin.git
+[submodule "dolphin-ipc/external/cpp-ipc"]
+	path = dolphin-ipc/external/cpp-ipc
+	url = git@github.com:mutouyun/cpp-ipc.git

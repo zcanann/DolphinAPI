@@ -73,7 +73,7 @@
       <Project>{92404eec-8f15-4974-b689-82ded9983641}</Project>
     </ProjectReference>
     <ProjectReference Include="..\dolphin-ipc\external\cpp-ipc\src\ipc.vcxproj">
-      <Project>{de0ccaa3-dd99-3605-9db5-000262d9d991}</Project>
+      <Project>{02e9460e-1bba-3bad-991a-ff484b0adc55}</Project>
     </ProjectReference>
   </ItemGroup>
   <Target Name="AfterBuild" Inputs="@(SourceFiles)" Outputs="@(SourceFiles -> '$(BinaryOutputDir)%(Filename)%(Extension)')">
