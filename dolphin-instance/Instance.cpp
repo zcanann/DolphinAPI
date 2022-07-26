@@ -193,13 +193,8 @@ void Instance::DolphinInstance_Connect(const ToInstanceParams_Connect& connectPa
 
 }
 
-void Instance::DolphinInstance_BeginRecordingInput(const ToInstanceParams_BeginRecordingInput& beginRecordingInputParams)
+void Instance::DolphinInstance_StartRecordingInput(const ToInstanceParams_StartRecordingInput& beginRecordingInputParams)
 {
-    if (Core::GetState() == Core::State::Paused)
-    {
-        Core::SetState(Core::State::Running);
-    }
-
     _isRecording = true;
 }
 
@@ -215,6 +210,24 @@ void Instance::DolphinInstance_StopRecordingInput(const ToInstanceParams_StopRec
     ipcSendToServer(ipcData);
 
     _inputs.clear();
+}
+
+void Instance::DolphinInstance_PauseEmulation(const ToInstanceParams_PauseEmulation& pauseEmulationParams)
+{
+
+    if (Core::GetState() == Core::State::Running)
+    {
+        Core::SetState(Core::State::Paused);
+    }
+}
+
+void Instance::DolphinInstance_UnpauseEmulation(const ToInstanceParams_UnpauseEmulation& unpauseEmulationParams)
+{
+
+    if (Core::GetState() == Core::State::Paused)
+    {
+        Core::SetState(Core::State::Running);
+    }
 }
 
 void Instance::UpdateRunningFlag()

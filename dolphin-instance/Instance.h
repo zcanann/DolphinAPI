@@ -56,8 +56,10 @@ public:
 
 protected:
 	virtual void DolphinInstance_Connect(const ToInstanceParams_Connect& connectParams) override;
-	virtual void DolphinInstance_BeginRecordingInput(const ToInstanceParams_BeginRecordingInput& beginRecordingInputParams) override;
+	virtual void DolphinInstance_StartRecordingInput(const ToInstanceParams_StartRecordingInput& beginRecordingInputParams) override;
 	virtual void DolphinInstance_StopRecordingInput(const ToInstanceParams_StopRecordingInput& stopRecordingInputParams) override;
+	virtual void DolphinInstance_PauseEmulation(const ToInstanceParams_PauseEmulation& pauseEmulationParams) override;
+	virtual void DolphinInstance_UnpauseEmulation(const ToInstanceParams_UnpauseEmulation& unpauseEmulationParams) override;
 
 	void UpdateRunningFlag();
 

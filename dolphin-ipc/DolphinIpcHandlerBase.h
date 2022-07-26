@@ -35,8 +35,10 @@ public:
 	// Instance implemented functions
 protected:
 	virtual void DolphinInstance_Connect(const ToInstanceParams_Connect& connectParams) { NOT_IMPLEMENTED(); }
-	virtual void DolphinInstance_BeginRecordingInput(const ToInstanceParams_BeginRecordingInput& beginRecordingInputParams) { NOT_IMPLEMENTED(); }
+	virtual void DolphinInstance_StartRecordingInput(const ToInstanceParams_StartRecordingInput& startRecordingInputParams) { NOT_IMPLEMENTED(); }
 	virtual void DolphinInstance_StopRecordingInput(const ToInstanceParams_StopRecordingInput& stopRecordingInputParams) { NOT_IMPLEMENTED(); }
+	virtual void DolphinInstance_PauseEmulation(const ToInstanceParams_PauseEmulation& pauseEmulationParams) { NOT_IMPLEMENTED(); }
+	virtual void DolphinInstance_UnpauseEmulation(const ToInstanceParams_UnpauseEmulation& unpauseEmulationParams) { NOT_IMPLEMENTED(); }
 
 	// Server implemented functions
 protected:

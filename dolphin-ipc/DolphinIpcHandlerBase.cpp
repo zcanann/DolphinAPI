@@ -143,8 +143,10 @@ void DolphinIpcHandlerBase::onServerToInstanceDataReceived(const DolphinIpcToIns
     switch (data._call)
     {
         case DolphinInstanceIpcCall::DolphinInstance_Connect: DolphinInstance_Connect(*data._params._connectParams); break;
-        case DolphinInstanceIpcCall::DolphinInstance_BeginRecordingInput: DolphinInstance_BeginRecordingInput(*data._params._beginRecordingInputParams); break;
+        case DolphinInstanceIpcCall::DolphinInstance_StartRecordingInput: DolphinInstance_StartRecordingInput(*data._params._startRecordingInputParams); break;
         case DolphinInstanceIpcCall::DolphinInstance_StopRecordingInput: DolphinInstance_StopRecordingInput(*data._params._stopRecordingInputParams); break;
+        case DolphinInstanceIpcCall::DolphinInstance_PauseEmulation: DolphinInstance_PauseEmulation(*data._params._pauseEmulationParams); break;
+        case DolphinInstanceIpcCall::DolphinInstance_UnpauseEmulation: DolphinInstance_UnpauseEmulation(*data._params._unpauseEmulationParams); break;
         case DolphinInstanceIpcCall::Null: default: std::cout << "NULL server => instance call!" << std::endl; break;
     }
 }
