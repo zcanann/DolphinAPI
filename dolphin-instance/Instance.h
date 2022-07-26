@@ -12,6 +12,7 @@
 
 #include <memory>
 #include <string>
+#include <queue>
 
 class InstanceIpcHandler;
 
@@ -56,10 +57,13 @@ public:
 
 protected:
 	virtual void DolphinInstance_Connect(const ToInstanceParams_Connect& connectParams) override;
+	virtual void DolphinInstance_Heartbeat(const ToInstanceParams_Heartbeat& heartbeatParams) override;
+	virtual void DolphinInstance_Terminate(const ToInstanceParams_Terminate& terminateParams) override;
 	virtual void DolphinInstance_StartRecordingInput(const ToInstanceParams_StartRecordingInput& beginRecordingInputParams) override;
 	virtual void DolphinInstance_StopRecordingInput(const ToInstanceParams_StopRecordingInput& stopRecordingInputParams) override;
 	virtual void DolphinInstance_PauseEmulation(const ToInstanceParams_PauseEmulation& pauseEmulationParams) override;
 	virtual void DolphinInstance_UnpauseEmulation(const ToInstanceParams_UnpauseEmulation& unpauseEmulationParams) override;
+	virtual void DolphinInstance_PlayInputs(const ToInstanceParams_PlayInputs& playInputsParams) override;
 
 	void UpdateRunningFlag();
 
@@ -71,5 +75,7 @@ protected:
 	bool _window_fullscreen = false;
 
 	bool _isRecording = false;
-	std::vector<DolphinControllerState> _inputs;
+	bool _isPlayingInput = false;
+	std::vector<DolphinControllerState> _recordingInputs;
+	std::vector<DolphinControllerState> _playbackInputs;
 };

@@ -35,14 +35,18 @@ public:
 	// Instance implemented functions
 protected:
 	virtual void DolphinInstance_Connect(const ToInstanceParams_Connect& connectParams) { NOT_IMPLEMENTED(); }
+	virtual void DolphinInstance_Heartbeat(const ToInstanceParams_Heartbeat& heartbeatParams) { NOT_IMPLEMENTED(); }
+	virtual void DolphinInstance_Terminate(const ToInstanceParams_Terminate& terminateParams) { NOT_IMPLEMENTED(); }
 	virtual void DolphinInstance_StartRecordingInput(const ToInstanceParams_StartRecordingInput& startRecordingInputParams) { NOT_IMPLEMENTED(); }
 	virtual void DolphinInstance_StopRecordingInput(const ToInstanceParams_StopRecordingInput& stopRecordingInputParams) { NOT_IMPLEMENTED(); }
 	virtual void DolphinInstance_PauseEmulation(const ToInstanceParams_PauseEmulation& pauseEmulationParams) { NOT_IMPLEMENTED(); }
 	virtual void DolphinInstance_UnpauseEmulation(const ToInstanceParams_UnpauseEmulation& unpauseEmulationParams) { NOT_IMPLEMENTED(); }
+	virtual void DolphinInstance_PlayInputs(const ToInstanceParams_PlayInputs& playInputsParams) { NOT_IMPLEMENTED(); }
 
 	// Server implemented functions
 protected:
 	virtual void DolphinServer_OnInstanceConnected(const ToServerParams_OnInstanceConnected& onInstanceConnectedParams) { NOT_IMPLEMENTED(); }
+	virtual void DolphinServer_OnInstanceHeartbeatAcknowledged(const ToServerParams_OnInstanceHeartbeatAcknowledged& onInstanceHeartbeatAcknowledgedParams) { NOT_IMPLEMENTED(); }
 	virtual void DolphinServer_OnInstanceTerminated(const ToServerParams_OnInstanceTerminated& onInstanceTerminatedParams) { NOT_IMPLEMENTED(); }
 	virtual void DolphinServer_OnInstanceRecordingStopped(const ToServerParams_OnInstanceRecordingStopped& onInstanceRecordingStopped) { NOT_IMPLEMENTED(); }
 

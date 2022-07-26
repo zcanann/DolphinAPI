@@ -132,6 +132,7 @@ void DolphinIpcHandlerBase::onInstanceToServerDataReceived(const DolphinIpcToSer
     switch (data._call)
     {
         case DolphinServerIpcCall::DolphinServer_OnInstanceConnected: DolphinServer_OnInstanceConnected(*data._params._onInstanceConnectedParams); break;
+        case DolphinServerIpcCall::DolphinServer_OnInstanceHeartbeatAcknowledged: DolphinServer_OnInstanceHeartbeatAcknowledged(*data._params._onInstanceHeartbeatAcknowledged); break;
         case DolphinServerIpcCall::DolphinServer_OnInstanceTerminated: DolphinServer_OnInstanceTerminated(*data._params._onInstanceTerminatedParams); break;
         case DolphinServerIpcCall::DolphinServer_OnInstanceRecordingStopped: DolphinServer_OnInstanceRecordingStopped(*data._params._onInstanceRecordingStopped); break;
         case DolphinServerIpcCall::Null: default: std::cout << "NULL instance => server call!" << std::endl; break;
@@ -143,10 +144,13 @@ void DolphinIpcHandlerBase::onServerToInstanceDataReceived(const DolphinIpcToIns
     switch (data._call)
     {
         case DolphinInstanceIpcCall::DolphinInstance_Connect: DolphinInstance_Connect(*data._params._connectParams); break;
+        case DolphinInstanceIpcCall::DolphinInstance_Heartbeat: DolphinInstance_Heartbeat(*data._params._heartbeatParams); break;
+        case DolphinInstanceIpcCall::DolphinInstance_Terminate: DolphinInstance_Terminate(*data._params._terminateParams); break;
         case DolphinInstanceIpcCall::DolphinInstance_StartRecordingInput: DolphinInstance_StartRecordingInput(*data._params._startRecordingInputParams); break;
         case DolphinInstanceIpcCall::DolphinInstance_StopRecordingInput: DolphinInstance_StopRecordingInput(*data._params._stopRecordingInputParams); break;
         case DolphinInstanceIpcCall::DolphinInstance_PauseEmulation: DolphinInstance_PauseEmulation(*data._params._pauseEmulationParams); break;
         case DolphinInstanceIpcCall::DolphinInstance_UnpauseEmulation: DolphinInstance_UnpauseEmulation(*data._params._unpauseEmulationParams); break;
+        case DolphinInstanceIpcCall::DolphinInstance_PlayInputs: DolphinInstance_PlayInputs(*data._params._playInputsParams); break;
         case DolphinInstanceIpcCall::Null: default: std::cout << "NULL server => instance call!" << std::endl; break;
     }
 }

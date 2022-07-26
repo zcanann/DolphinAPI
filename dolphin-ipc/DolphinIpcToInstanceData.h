@@ -1,6 +1,8 @@
 #pragma once
 // Defines the IPC methods that are called from the controlling library (server) to an individual Dolphin instance (client)
 
+#include "IpcStructs.h"
+
 #include "external/cereal/cereal.hpp"
 
 #include <string>
@@ -9,10 +11,13 @@ enum class DolphinInstanceIpcCall
 {
     Null,
     DolphinInstance_Connect,
+	DolphinInstance_Heartbeat,
+	DolphinInstance_Terminate,
 	DolphinInstance_StartRecordingInput,
 	DolphinInstance_StopRecordingInput,
 	DolphinInstance_PauseEmulation,
 	DolphinInstance_UnpauseEmulation,
+	DolphinInstance_PlayInputs,
 };
 
 struct ToInstanceParams_Connect
@@ -23,6 +28,22 @@ struct ToInstanceParams_Connect
 	void serialize(Archive& ar)
 	{
 		ar(_channelName);
+	}
+};
+
+struct ToInstanceParams_Heartbeat
+{
+	template <class Archive>
+	void serialize(Archive& ar)
+	{
+	}
+};
+
+struct ToInstanceParams_Terminate
+{
+	template <class Archive>
+	void serialize(Archive& ar)
+	{
 	}
 };
 
@@ -58,16 +79,30 @@ struct ToInstanceParams_UnpauseEmulation
 	}
 };
 
+struct ToInstanceParams_PlayInputs
+{
+	std::vector<DolphinControllerState> _inputStates;
+
+	template <class Archive>
+	void serialize(Archive& ar)
+	{
+		ar(_inputStates);
+	}
+};
+
 union DolphinIpcToInstanceDataParams
 {
 	DolphinIpcToInstanceDataParams() : _connectParams({}) { }
 	~DolphinIpcToInstanceDataParams() {}
 
 	std::shared_ptr<ToInstanceParams_Connect> _connectParams;
+	std::shared_ptr<ToInstanceParams_Heartbeat> _heartbeatParams;
+	std::shared_ptr<ToInstanceParams_Terminate> _terminateParams;
 	std::shared_ptr<ToInstanceParams_StartRecordingInput> _startRecordingInputParams;
 	std::shared_ptr<ToInstanceParams_StopRecordingInput> _stopRecordingInputParams;
 	std::shared_ptr<ToInstanceParams_PauseEmulation> _pauseEmulationParams;
 	std::shared_ptr<ToInstanceParams_UnpauseEmulation> _unpauseEmulationParams;
+	std::shared_ptr<ToInstanceParams_PlayInputs> _playInputsParams;
 };
 
 struct DolphinIpcToInstanceData
@@ -89,6 +124,24 @@ struct DolphinIpcToInstanceData
 					_params._connectParams = std::make_shared<ToInstanceParams_Connect>();
 				}
 				ar(*(_params._connectParams));
+				break;
+			}
+			case DolphinInstanceIpcCall::DolphinInstance_Heartbeat:
+			{
+				if (!_params._heartbeatParams)
+				{
+					_params._heartbeatParams = std::make_shared<ToInstanceParams_Heartbeat>();
+				}
+				ar(*(_params._heartbeatParams));
+				break;
+			}
+			case DolphinInstanceIpcCall::DolphinInstance_Terminate:
+			{
+				if (!_params._terminateParams)
+				{
+					_params._terminateParams = std::make_shared<ToInstanceParams_Terminate>();
+				}
+				ar(*(_params._terminateParams));
 				break;
 			}
 			case DolphinInstanceIpcCall::DolphinInstance_StartRecordingInput:
@@ -125,6 +178,15 @@ struct DolphinIpcToInstanceData
 					_params._unpauseEmulationParams = std::make_shared<ToInstanceParams_UnpauseEmulation>();
 				}
 				ar(*(_params._unpauseEmulationParams));
+				break;
+			}
+			case DolphinInstanceIpcCall::DolphinInstance_PlayInputs:
+			{
+				if (!_params._playInputsParams)
+				{
+					_params._playInputsParams = std::make_shared<ToInstanceParams_PlayInputs>();
+				}
+				ar(*(_params._playInputsParams));
 				break;
 			}
 			case DolphinInstanceIpcCall::Null: default: break;

@@ -10,6 +10,7 @@
 #include "Core/Config/WiimoteSettings.h"
 #include "Core/ConfigManager.h"
 #include "Core/Core.h"
+#include "Core/HW/CPU.h"
 #include "Core/HW/Wiimote.h"
 #include "Core/IOS/IOS.h"
 #include "Core/IOS/STM/STM.h"
@@ -103,10 +104,83 @@ void Instance::PrepareForTASInput()
 
     Movie::SetGCInputManip([this](GCPadStatus* PadStatus, int ControllerId)
     {
-        u64 frame = Movie::GetCurrentFrame();
+        // u64 frame = Movie::GetCurrentFrame();
 
         if (PadStatus)
         {
+            if (_isPlayingInput && _playbackInputs.size() > 0)
+            {
+                DolphinControllerState padState = _playbackInputs.back();
+                _playbackInputs.pop_back();
+
+                PadStatus->isConnected = padState.IsConnected;
+
+                PadStatus->triggerLeft = padState.TriggerL;
+                PadStatus->triggerRight = padState.TriggerR;
+
+                PadStatus->stickX = padState.AnalogStickX;
+                PadStatus->stickY = padState.AnalogStickY;
+
+                PadStatus->substickX = padState.CStickX;
+                PadStatus->substickY = padState.CStickY;
+
+                PadStatus->button = 0;
+                PadStatus->button |= PAD_USE_ORIGIN;
+
+                if (padState.A)
+                {
+                    PadStatus->button |= PAD_BUTTON_A;
+                    PadStatus->analogA = 0xFF;
+                }
+                if (padState.B)
+                {
+                    PadStatus->button |= PAD_BUTTON_B;
+                    PadStatus->analogB = 0xFF;
+                }
+                if (padState.X)
+                    PadStatus->button |= PAD_BUTTON_X;
+                if (padState.Y)
+                    PadStatus->button |= PAD_BUTTON_Y;
+                if (padState.Z)
+                    PadStatus->button |= PAD_TRIGGER_Z;
+                if (padState.Start)
+                    PadStatus->button |= PAD_BUTTON_START;
+
+                if (padState.DPadUp)
+                    PadStatus->button |= PAD_BUTTON_UP;
+                if (padState.DPadDown)
+                    PadStatus->button |= PAD_BUTTON_DOWN;
+                if (padState.DPadLeft)
+                    PadStatus->button |= PAD_BUTTON_LEFT;
+                if (padState.DPadRight)
+                    PadStatus->button |= PAD_BUTTON_RIGHT;
+
+                if (padState.L)
+                    PadStatus->button |= PAD_TRIGGER_L;
+                if (padState.R)
+                    PadStatus->button |= PAD_TRIGGER_R;
+
+                if (padState.GetOrigin)
+                    PadStatus->button |= PAD_GET_ORIGIN;
+
+                if (padState.Disc)
+                {
+                    Core::RunAsCPUThread([]
+                        {
+                            if (!DVDInterface::AutoChangeDisc())
+                            {
+                                CPU::Break();
+                                // PanicAlertFmtT("Change the disc to {0}", s_discChange);
+                            }
+                        });
+                }
+
+                if (padState.Reset)
+                {
+                    ProcessorInterface::ResetButton_Tap();
+                }
+            }
+
             if (_isRecording)
             {
                 DolphinControllerState padState;
@@ -141,22 +215,8 @@ void Instance::PrepareForTASInput()
                 padState.Disc = false; // TODO
                 padState.Reset = false; // TODO
 
-                _inputs.push_back(padState);
+                _recordingInputs.push_back(padState);
             }
-        }
-        static int debug = 5;
-        if (PadStatus)
-        {
-            // pad_status->triggerRight = 255;
-            // pad_status->button |= PadButton::PAD_TRIGGER_R;
-
-            /*
-            if (debug-- < 0)
-            {
-                pad_status->button |= PadButton::PAD_BUTTON_A;
-                pad_status->button |= PadButton::PAD_BUTTON_START;
-                debug = 5;
-            }*/
         }
     });
 
@@ -193,6 +253,18 @@ void Instance::DolphinInstance_Connect(const ToInstanceParams_Connect& connectPa
 
 }
 
+void Instance::DolphinInstance_Heartbeat(const ToInstanceParams_Heartbeat& heartbeatParams)
+{
+
+}
+
+void Instance::DolphinInstance_Terminate(const ToInstanceParams_Terminate& terminateParams)
+{
+    // TODO: Send off any existing recording data?
+
+    RequestShutdown();
+}
+
 void Instance::DolphinInstance_StartRecordingInput(const ToInstanceParams_StartRecordingInput& beginRecordingInputParams)
 {
     _isRecording = true;
@@ -204,12 +276,12 @@ void Instance::DolphinInstance_StopRecordingInput(const ToInstanceParams_StopRec
 
     DolphinIpcToServerData ipcData;
     std::shared_ptr<ToServerParams_OnInstanceRecordingStopped> data = std::make_shared<ToServerParams_OnInstanceRecordingStopped>();
-    data->_inputStates = _inputs;
+    data->_inputStates = _recordingInputs;
     ipcData._call = DolphinServerIpcCall::DolphinServer_OnInstanceRecordingStopped;
     ipcData._params._onInstanceRecordingStopped = data;
     ipcSendToServer(ipcData);
 
-    _inputs.clear();
+    _recordingInputs.clear();
 }
 
 void Instance::DolphinInstance_PauseEmulation(const ToInstanceParams_PauseEmulation& pauseEmulationParams)
@@ -223,11 +295,17 @@ void Instance::DolphinInstance_PauseEmulation(const ToInstanceParams_PauseEmulat
 
 void Instance::DolphinInstance_UnpauseEmulation(const ToInstanceParams_UnpauseEmulation& unpauseEmulationParams)
 {
-
     if (Core::GetState() == Core::State::Paused)
     {
         Core::SetState(Core::State::Running);
     }
+}
+
+void Instance::DolphinInstance_PlayInputs(const ToInstanceParams_PlayInputs& playInputsParams)
+{
+    // These vectors can be masive, use std::move to avoid an extra alloc (should be safe since _inputStates is not used after this)
+    _playbackInputs = std::move(playInputsParams._inputStates);
+    _isPlayingInput = true;
 }
 
 void Instance::UpdateRunningFlag()

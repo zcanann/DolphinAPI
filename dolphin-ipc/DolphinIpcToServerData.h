@@ -1,16 +1,17 @@
 #pragma once
 // Defines the IPC callbacks that are called from an individual Dolphin instance (client) to the controlling library (server)
 
+#include "IpcStructs.h"
+
 #include "external/cereal/cereal.hpp"
 
 #include <string>
-
-#include "IpcStructs.h"
 
 enum class DolphinServerIpcCall
 {
 	Null,
 	DolphinServer_OnInstanceConnected,
+	DolphinServer_OnInstanceHeartbeatAcknowledged,
 	DolphinServer_OnInstanceTerminated,
 	DolphinServer_OnInstanceRecordingStopped,
 };
@@ -23,6 +24,14 @@ struct ToServerParams_OnInstanceConnected
 	void serialize(Archive& ar)
 	{
 		ar(_params);
+	}
+};
+
+struct ToServerParams_OnInstanceHeartbeatAcknowledged
+{
+	template <class Archive>
+	void serialize(Archive& ar)
+	{
 	}
 };
 
@@ -56,6 +65,7 @@ union DolphinIpcToServerDataParams
 	~DolphinIpcToServerDataParams() {}
 
 	std::shared_ptr<ToServerParams_OnInstanceConnected> _onInstanceConnectedParams;
+	std::shared_ptr<ToServerParams_OnInstanceHeartbeatAcknowledged> _onInstanceHeartbeatAcknowledged;
 	std::shared_ptr<ToServerParams_OnInstanceTerminated> _onInstanceTerminatedParams;
 	std::shared_ptr<ToServerParams_OnInstanceRecordingStopped> _onInstanceRecordingStopped;
 };
@@ -79,6 +89,15 @@ struct DolphinIpcToServerData
 					_params._onInstanceConnectedParams = std::make_shared<ToServerParams_OnInstanceConnected>();
 				}
 				ar(*(_params._onInstanceConnectedParams));
+				break;
+			}
+			case DolphinServerIpcCall::DolphinServer_OnInstanceHeartbeatAcknowledged:
+			{
+				if (!_params._onInstanceHeartbeatAcknowledged)
+				{
+					_params._onInstanceHeartbeatAcknowledged = std::make_shared<ToServerParams_OnInstanceHeartbeatAcknowledged>();
+				}
+				ar(*(_params._onInstanceHeartbeatAcknowledged));
 				break;
 			}
 			case DolphinServerIpcCall::DolphinServer_OnInstanceTerminated:
