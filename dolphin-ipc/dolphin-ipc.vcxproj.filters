@@ -15,9 +15,6 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="DolphinIpcHandlerBase.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="external\cereal\archives\adapters.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -273,19 +270,15 @@
     <ClInclude Include="external\cereal\version.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="DolphinIpcToServerData.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="DolphinIpcToInstanceData.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-  </ItemGroup>
-  <ItemGroup>
-    <ClCompile Include="DolphinIpcHandlerBase.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
+    <ClInclude Include="DolphinIpcHandlerBase.h" />
+    <ClInclude Include="DolphinIpcToInstanceData.h" />
+    <ClInclude Include="DolphinIpcToServerData.h" />
+    <ClInclude Include="IpcStructs.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="external\cereal\external\rapidxml\manual.html" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="DolphinIpcHandlerBase.cpp" />
   </ItemGroup>
 </Project>

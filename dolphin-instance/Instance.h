@@ -4,9 +4,11 @@
 #pragma once
 
 #include "dolphin-ipc/DolphinIpcHandlerBase.h"
+#include "dolphin-ipc/IpcStructs.h"
 
 #include "Common/Flag.h"
 #include "Common/WindowSystemInfo.h"
+#include "Core/Movie.h"
 
 #include <memory>
 #include <string>
@@ -22,10 +24,10 @@ public:
 	bool IsRunning() const { return _running.IsSet(); }
 	bool IsWindowFocused() const { return _window_focus; }
 	bool IsWindowFullscreen() const { return _window_fullscreen; }
-
-	virtual bool Init();
 	virtual void SetTitle(const std::string& title);
 	virtual void MainLoop() = 0;
+
+	virtual bool Init();
 
 	void InitControllers();
 	void ShutdownControllers();
@@ -53,9 +55,9 @@ public:
 #endif
 
 protected:
-	virtual void DolphinInstance_WaitFrames(const ToInstanceParams_WaitFrames& waitFramesParam) override;
 	virtual void DolphinInstance_Connect(const ToInstanceParams_Connect& connectParams) override;
-	virtual void DolphinInstance_LoadGame(const ToInstanceParams_LoadGame& loadGameParams) override;
+	virtual void DolphinInstance_BeginRecordingInput(const ToInstanceParams_BeginRecordingInput& beginRecordingInputParams) override;
+	virtual void DolphinInstance_StopRecordingInput(const ToInstanceParams_StopRecordingInput& stopRecordingInputParams) override;
 
 	void UpdateRunningFlag();
 
@@ -65,4 +67,7 @@ protected:
 
 	bool _window_focus = true;  // Should be made atomic if actually implemented
 	bool _window_fullscreen = false;
+
+	bool _isRecording = false;
+	std::vector<DolphinControllerState> _inputs;
 };

@@ -34,19 +34,19 @@ public:
 
 	// Instance implemented functions
 protected:
-	virtual void DolphinInstance_WaitFrames(const ToInstanceParams_WaitFrames& waitFramesParam) { NOT_IMPLEMENTED(); }
 	virtual void DolphinInstance_Connect(const ToInstanceParams_Connect& connectParams) { NOT_IMPLEMENTED(); }
-	virtual void DolphinInstance_LoadGame(const ToInstanceParams_LoadGame& loadGameParams) { NOT_IMPLEMENTED(); }
+	virtual void DolphinInstance_BeginRecordingInput(const ToInstanceParams_BeginRecordingInput& beginRecordingInputParams) { NOT_IMPLEMENTED(); }
+	virtual void DolphinInstance_StopRecordingInput(const ToInstanceParams_StopRecordingInput& stopRecordingInputParams) { NOT_IMPLEMENTED(); }
 
 	// Server implemented functions
 protected:
 	virtual void DolphinServer_OnInstanceConnected(const ToServerParams_OnInstanceConnected& onInstanceConnectedParams) { NOT_IMPLEMENTED(); }
 	virtual void DolphinServer_OnInstanceTerminated(const ToServerParams_OnInstanceTerminated& onInstanceTerminatedParams) { NOT_IMPLEMENTED(); }
+	virtual void DolphinServer_OnInstanceRecordingStopped(const ToServerParams_OnInstanceRecordingStopped& onInstanceRecordingStopped) { NOT_IMPLEMENTED(); }
 
 private:
 	template<class T>
 	void ipcSendData(ipc::channel* channel, const T& params);
-
 
 	template<class T>
 	void ipcReadData(ipc::channel* channel, std::function<void(const T&)> onDeserialize);

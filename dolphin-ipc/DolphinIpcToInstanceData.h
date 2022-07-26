@@ -8,25 +8,9 @@
 enum class DolphinInstanceIpcCall
 {
     Null,
-	ToInstanceParams_WaitFrames,
     DolphinInstance_Connect,
-    DolphinInstance_LoadGame,
-};
-
-struct ToInstanceParams_WaitFrames
-{
-	int _frames;
-
-	template <class Archive>
-	void save(Archive& ar) const
-	{
-		ar(_frames);
-	}
-	template <class Archive>
-	void load(Archive& ar)
-	{
-		ar(_frames);
-	}
+	DolphinInstance_BeginRecordingInput,
+	DolphinInstance_StopRecordingInput,
 };
 
 struct ToInstanceParams_Connect
@@ -34,76 +18,70 @@ struct ToInstanceParams_Connect
     std::string _channelName;
 
 	template <class Archive>
-	void save(Archive& ar) const
-	{
-		ar(_channelName);
-	}
-	template <class Archive>
-	void load(Archive& ar)
+	void serialize(Archive& ar)
 	{
 		ar(_channelName);
 	}
 };
 
-struct ToInstanceParams_LoadGame
+struct ToInstanceParams_BeginRecordingInput
 {
-    std::string _title;
+	template <class Archive>
+	void serialize(Archive& ar)
+	{
+	}
+};
 
+struct ToInstanceParams_StopRecordingInput
+{
 	template <class Archive>
-	void save(Archive& ar) const
+	void serialize(Archive& ar)
 	{
-		ar(_title);
 	}
-	template <class Archive>
-	void load(Archive& ar)
-	{
-		ar(_title);
-	}
+};
+
+union DolphinIpcToInstanceDataParams
+{
+	DolphinIpcToInstanceDataParams() : _connectParams({}) { }
+	~DolphinIpcToInstanceDataParams() {}
+
+	std::shared_ptr<ToInstanceParams_Connect> _connectParams;
+	std::shared_ptr<ToInstanceParams_BeginRecordingInput> _beginRecordingInputParams;
+	std::shared_ptr<ToInstanceParams_StopRecordingInput> _stopRecordingInputParams;
 };
 
 struct DolphinIpcToInstanceData
 {
     DolphinInstanceIpcCall _call = DolphinInstanceIpcCall::Null;
-
-    union
-    {
-		ToInstanceParams_WaitFrames* _waitFramesParams;
-		ToInstanceParams_Connect* _connectParams;
-        ToInstanceParams_LoadGame* _loadGameParams;
-    } _params;
+	DolphinIpcToInstanceDataParams _params;
 
 	template <class Archive>
-	void save(Archive& ar) const
+	void serialize(Archive& ar)
 	{
 		ar(_call);
 
 		switch (_call)
 		{
-			case DolphinInstanceIpcCall::ToInstanceParams_WaitFrames: ar(*_params._waitFramesParams); break;
-			case DolphinInstanceIpcCall::DolphinInstance_Connect: ar(*_params._connectParams); break;
-			case DolphinInstanceIpcCall::DolphinInstance_LoadGame: ar(*_params._loadGameParams); break;
-			case DolphinInstanceIpcCall::Null: default: break;
-		}
-	}
-
-	template <class Archive>
-	void load(Archive& ar)
-	{
-		ar(_call);
-
-		switch (_call)
-		{
-			case DolphinInstanceIpcCall::ToInstanceParams_WaitFrames:
-				_params._waitFramesParams = new ToInstanceParams_WaitFrames();
-				ar(*(_params._waitFramesParams));
-				break;
 			case DolphinInstanceIpcCall::DolphinInstance_Connect:
-				_params._connectParams = new ToInstanceParams_Connect();
+				if (!_params._connectParams)
+				{
+					_params._connectParams = std::make_shared<ToInstanceParams_Connect>();
+				}
 				ar(*(_params._connectParams));
 				break;
-			case DolphinInstanceIpcCall::DolphinInstance_LoadGame:
-				_params._loadGameParams = new ToInstanceParams_LoadGame();
-				ar(*(_params._loadGameParams));
+			case DolphinInstanceIpcCall::DolphinInstance_BeginRecordingInput:
+				if (!_params._beginRecordingInputParams)
+				{
+					_params._beginRecordingInputParams = std::make_shared<ToInstanceParams_BeginRecordingInput>();
+				}
+				ar(*(_params._beginRecordingInputParams));
+				break;
+			case DolphinInstanceIpcCall::DolphinInstance_StopRecordingInput:
+				if (!_params._beginRecordingInputParams)
+				{
+					_params._stopRecordingInputParams = std::make_shared<ToInstanceParams_StopRecordingInput>();
+				}
+				ar(*(_params._stopRecordingInputParams));
 				break;
 			case DolphinInstanceIpcCall::Null: default: break;
 		}
