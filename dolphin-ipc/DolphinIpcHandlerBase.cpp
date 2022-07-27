@@ -45,7 +45,7 @@ void DolphinIpcHandlerBase::initializeChannels(const std::string& uniqueChannelI
     std::cout << __func__ << ": instance channel: " << uniqueInstanceToServerChannel << std::endl;
     std::cout << __func__ << ": server channel: " << uniqueServerToInstanceChannel << std::endl;
 
-    if (isInstance)
+    if (_isInstance)
     {
         _instanceToServer = new ipc::channel(uniqueInstanceToServerChannel.c_str(), ipc::sender);
         _serverToInstance = new ipc::channel(uniqueServerToInstanceChannel.c_str(), ipc::receiver);

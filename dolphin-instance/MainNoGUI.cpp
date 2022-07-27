@@ -139,7 +139,7 @@ static std::unique_ptr<Instance> GetInstance(const optparse::Values& options)
 
     if (instanceId.empty())
     {
-        instanceId = "F98ED9EB40024B650C739B811A2AF755";
+        instanceId = "MOCK";
     }
 
     #if HAVE_X11
@@ -207,6 +207,7 @@ int main(int argc, char* argv[])
         save_state_path = static_cast<const char*>(options.get("save_state"));
     }
 
+    // TODO: Temp debug! Remove this at some point
     if (args.size() <= 0)
     {
         args.push_back("C:/Dolphin/Games/Star Fox Adventures (USA) (v1.00).iso");

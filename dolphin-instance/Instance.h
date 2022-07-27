@@ -15,6 +15,7 @@
 #include <queue>
 
 class InstanceIpcHandler;
+class MockServer;
 
 class Instance : public DolphinIpcHandlerBase
 {
@@ -74,8 +75,11 @@ protected:
 	bool _window_focus = true;  // Should be made atomic if actually implemented
 	bool _window_fullscreen = false;
 
+	std::chrono::system_clock::time_point _lastHeartbeat = std::chrono::system_clock::now();
 	bool _isRecording = false;
 	bool _isPlayingInput = false;
 	std::vector<DolphinControllerState> _recordingInputs;
 	std::vector<DolphinControllerState> _playbackInputs;
+
+	std::shared_ptr<MockServer> _mockServer;
 };

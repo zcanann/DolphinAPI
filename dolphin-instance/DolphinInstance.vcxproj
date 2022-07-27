@@ -47,6 +47,7 @@
     <ClCompile Include="Instance.cpp" />
     <ClCompile Include="InstanceHeadless.cpp" />
     <ClCompile Include="InstanceWin32.cpp" />
+    <ClCompile Include="MockServer.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
@@ -58,6 +59,7 @@
   <ItemGroup>
     <ClInclude Include="InstanceConfigLoader.h" />
     <ClInclude Include="Instance.h" />
+    <ClInclude Include="MockServer.h" />
   </ItemGroup>
   <ItemGroup>
     <Manifest Include="DolphinInstance.exe.manifest" />

@@ -4,6 +4,7 @@
 #include "Instance.h"
 
 #include "InstanceConfigLoader.h"
+#include "MockServer.h"
 
 // Dolphin includes
 #include "Core/Config/MainSettings.h"
@@ -30,16 +31,12 @@
 #include "InputCommon/InputConfig.h"
 #include "VideoCommon/VideoConfig.h"
 
-#pragma optimize("", off)
-
-namespace ProcessorInterface
-{
-    void PowerButton_Tap();
-}
-
 Instance::Instance(const std::string& instanceId)
 {
     initializeChannels(instanceId, true);
+
+    // Enable this line to debug IPC locally
+    // _mockServer = std::make_shared<MockServer>(instanceId);
 }
 
 Instance::~Instance()
@@ -63,9 +60,6 @@ bool Instance::Init()
     InitControllers();
     Config::AddLayer(GenerateInstanceConfigLoader());
     PrepareForTASInput();
-
-    // Initialize to paused, since we will need to wait for IPC commands to send input data
-    Core::SetState(Core::State::Paused);
 
     return true;
 }
@@ -137,31 +131,18 @@ void Instance::PrepareForTASInput()
                     PadStatus->button |= PAD_BUTTON_B;
                     PadStatus->analogB = 0xFF;
                 }
-                if (padState.X)
-                    PadStatus->button |= PAD_BUTTON_X;
-                if (padState.Y)
-                    PadStatus->button |= PAD_BUTTON_Y;
-                if (padState.Z)
-                    PadStatus->button |= PAD_TRIGGER_Z;
-                if (padState.Start)
-                    PadStatus->button |= PAD_BUTTON_START;
 
-                if (padState.DPadUp)
-                    PadStatus->button |= PAD_BUTTON_UP;
-                if (padState.DPadDown)
-                    PadStatus->button |= PAD_BUTTON_DOWN;
-                if (padState.DPadLeft)
-                    PadStatus->button |= PAD_BUTTON_LEFT;
-                if (padState.DPadRight)
-                    PadStatus->button |= PAD_BUTTON_RIGHT;
-
-                if (padState.L)
-                    PadStatus->button |= PAD_TRIGGER_L;
-                if (padState.R)
-                    PadStatus->button |= PAD_TRIGGER_R;
-
-                if (padState.GetOrigin)
-                    PadStatus->button |= PAD_GET_ORIGIN;
+                PadStatus->button |= padState.X ? PAD_BUTTON_X : 0;
+                PadStatus->button |= padState.Y ? PAD_BUTTON_Y : 0;
+                PadStatus->button |= padState.Z ? PAD_TRIGGER_Z : 0;
+                PadStatus->button |= padState.Start ? PAD_BUTTON_START : 0;
+                PadStatus->button |= padState.DPadUp ? PAD_BUTTON_UP : 0;
+                PadStatus->button |= padState.DPadDown ? PAD_BUTTON_DOWN : 0;
+                PadStatus->button |= padState.DPadLeft ? PAD_BUTTON_LEFT : 0;
+                PadStatus->button |= padState.DPadRight ? PAD_BUTTON_RIGHT : 0;
+                PadStatus->button |= padState.L ? PAD_TRIGGER_L : 0;
+                PadStatus->button |= padState.R ? PAD_TRIGGER_R : 0;
+                PadStatus->button |= padState.GetOrigin ? PAD_GET_ORIGIN : 0;
 
                 if (padState.Disc)
                 {
@@ -255,7 +236,14 @@ void Instance::DolphinInstance_Connect(const ToInstanceParams_Connect& connectPa
 
 void Instance::DolphinInstance_Heartbeat(const ToInstanceParams_Heartbeat& heartbeatParams)
 {
+    _lastHeartbeat = std::chrono::system_clock::now();
 
+    // Acknowledge heartbeat
+    DolphinIpcToServerData ipcData;
+    std::shared_ptr<ToServerParams_OnInstanceHeartbeatAcknowledged> data = std::make_shared<ToServerParams_OnInstanceHeartbeatAcknowledged>();
+    ipcData._call = DolphinServerIpcCall::DolphinServer_OnInstanceHeartbeatAcknowledged;
+    ipcData._params._onInstanceHeartbeatAcknowledged = data;
+    ipcSendToServer(ipcData);
 }
 
 void Instance::DolphinInstance_Terminate(const ToInstanceParams_Terminate& terminateParams)
@@ -286,7 +274,6 @@ void Instance::DolphinInstance_StopRecordingInput(const ToInstanceParams_StopRec
 
 void Instance::DolphinInstance_PauseEmulation(const ToInstanceParams_PauseEmulation& pauseEmulationParams)
 {
-
     if (Core::GetState() == Core::State::Running)
     {
         Core::SetState(Core::State::Paused);
@@ -311,6 +298,17 @@ void Instance::DolphinInstance_PlayInputs(const ToInstanceParams_PlayInputs& pla
 void Instance::UpdateRunningFlag()
 {
     updateIpcListen();
+
+    if (_mockServer)
+    {
+        _mockServer->Update();
+    }
+
+    // Close if no heartbeat command sent over IPC recently
+    if (std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now() - _lastHeartbeat) > std::chrono::seconds(10))
+    {
+        // RequestShutdown();
+    }
 
     if (_shutdown_requested.TestAndClear())
     {
