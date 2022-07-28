@@ -136,6 +136,7 @@ static std::unique_ptr<Instance> GetInstance(const optparse::Values& options)
 {
     std::string platformName = static_cast<const char*>(options.get("platform"));
     std::string instanceId = static_cast<const char*>(options.get("instanceId"));
+    bool recordOnLaunch = options.is_set("record");
 
     if (instanceId.empty())
     {
@@ -144,21 +145,21 @@ static std::unique_ptr<Instance> GetInstance(const optparse::Values& options)
 
     #if HAVE_X11
         if (platformName == "x11" || platformName.empty())
-            return Instance::CreateX11Instance(instanceId);
+            return Instance::CreateX11Instance(instanceId, recordOnLaunch);
     #endif
 
     #ifdef __linux__
         if (platformName == "fbdev" || platformName.empty())
-            return Instance::CreateFBDevInstance(instanceId);
+            return Instance::CreateFBDevInstance(instanceId, recordOnLaunch);
     #endif
 
     #ifdef _WIN32
         if (platformName == "win32" || platformName.empty())
-            return Instance::CreateWin32Instance(instanceId);
+            return Instance::CreateWin32Instance(instanceId, recordOnLaunch);
     #endif
 
     if (platformName == "headless" || platformName.empty())
-        return Instance::CreateHeadlessInstance(instanceId);
+        return Instance::CreateHeadlessInstance(instanceId, recordOnLaunch);
 
     return nullptr;
 }
@@ -191,6 +192,8 @@ std::unique_ptr<optparse::OptionParser> createParser()
         .metavar("<id>")
         .type("string")
         .help("A unique instance identifier used for creating IPC channels.");
+
+    parser->add_option("-r", "--record").action("store_true").help("Start recording input on launch");
 
     return parser;
 }
@@ -272,9 +275,10 @@ int main(int argc, char* argv[])
         return 1;
     }
 
-    Core::AddOnStateChangedCallback([](Core::State state) {
-    if (state == Core::State::Uninitialized)
-    PlatformInstance->Stop();
+    Core::AddOnStateChangedCallback([](Core::State state)
+    {
+        if (state == Core::State::Uninitialized)
+        PlatformInstance->Stop();
     });
 
     #ifdef _WIN32

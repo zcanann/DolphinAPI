@@ -20,7 +20,7 @@ class MockServer;
 class Instance : public DolphinIpcHandlerBase
 {
 public:
-	Instance(const std::string& instanceId);
+	Instance(const std::string& instanceId, bool recordOnLaunch);
 	virtual ~Instance();
 
 	bool IsRunning() const { return _running.IsSet(); }
@@ -43,17 +43,17 @@ public:
 	// Request an immediate shutdown.
 	void Stop();
 
-	static std::unique_ptr<Instance> CreateHeadlessInstance(const std::string& instanceId);
+	static std::unique_ptr<Instance> CreateHeadlessInstance(const std::string& instanceId, bool recordOnLaunch);
 #ifdef HAVE_X11
-	static std::unique_ptr<Instance> CreateX11Instance(const std::string& instanceId);
+	static std::unique_ptr<Instance> CreateX11Instance(const std::string& instanceId, bool recordOnLaunch);
 #endif
 
 #ifdef __linux__
-	static std::unique_ptr<Instance> CreateFBDevInstance(const std::string& instanceId);
+	static std::unique_ptr<Instance> CreateFBDevInstance(const std::string& instanceId, bool recordOnLaunch);
 #endif
 
 #ifdef _WIN32
-	static std::unique_ptr<Instance> CreateWin32Instance(const std::string& instanceId);
+	static std::unique_ptr<Instance> CreateWin32Instance(const std::string& instanceId, bool recordOnLaunch);
 #endif
 
 protected:
@@ -67,6 +67,7 @@ protected:
 	virtual void DolphinInstance_PlayInputs(const ToInstanceParams_PlayInputs& playInputsParams) override;
 
 	void UpdateRunningFlag();
+	void StopRecording();
 
 	Common::Flag _running{true};
 	Common::Flag _shutdown_requested{false};
@@ -76,8 +77,15 @@ protected:
 	bool _window_fullscreen = false;
 
 	std::chrono::system_clock::time_point _lastHeartbeat = std::chrono::system_clock::now();
-	bool _isRecording = false;
-	bool _isPlayingInput = false;
+
+	enum class RecordingState
+	{
+		None,
+		Recording,
+		Playback,
+	};
+
+	RecordingState _instanceState = RecordingState::None;
 	std::vector<DolphinControllerState> _recordingInputs;
 	std::vector<DolphinControllerState> _playbackInputs;
 

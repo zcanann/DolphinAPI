@@ -31,12 +31,23 @@
 #include "InputCommon/InputConfig.h"
 #include "VideoCommon/VideoConfig.h"
 
-Instance::Instance(const std::string& instanceId)
+#pragma optimize("", off)
+
+Instance::Instance(const std::string& instanceId, bool recordOnLaunch)
 {
     initializeChannels(instanceId, true);
 
-    // Enable this line to debug IPC locally
-    // _mockServer = std::make_shared<MockServer>(instanceId);
+    if (recordOnLaunch)
+    {
+        _instanceState = RecordingState::Recording;
+    }
+    _instanceState = RecordingState::Recording;
+
+    // For debugging some parts of IPC locally
+    if (instanceId == "MOCK")
+    {
+        _mockServer = std::make_shared<MockServer>(instanceId);
+    }
 }
 
 Instance::~Instance()
@@ -90,8 +101,6 @@ void Instance::ShutdownControllers()
 
 void Instance::PrepareForTASInput()
 {
-    // Core::SetState(Core::State::Paused);
-
     Wiimote::ResetAllWiimotes();
     Core::UpdateWantDeterminism();
     Movie::SetReadOnly(false);
@@ -100,10 +109,15 @@ void Instance::PrepareForTASInput()
     {
         // u64 frame = Movie::GetCurrentFrame();
 
-        if (PadStatus)
+        switch (_instanceState)
         {
-            if (_isPlayingInput && _playbackInputs.size() > 0)
+            case RecordingState::Playback:
             {
+                if (PadStatus == nullptr || _playbackInputs.size() <= 0)
+                {
+                    return;
+                }
+
                 DolphinControllerState padState = _playbackInputs.back();
                 _playbackInputs.pop_back();
 
@@ -160,10 +174,15 @@ void Instance::PrepareForTASInput()
                 {
                     ProcessorInterface::ResetButton_Tap();
                 }
+                break;
             }
-
-            if (_isRecording)
+            case RecordingState::Recording:
             {
+                if (PadStatus == nullptr)
+                {
+                    return;
+                }
+
                 DolphinControllerState padState;
 
                 padState.A = ((PadStatus->button & PAD_BUTTON_A) != 0);
@@ -197,6 +216,12 @@ void Instance::PrepareForTASInput()
                 padState.Reset = false; // TODO
 
                 _recordingInputs.push_back(padState);
+                break;
+            }
+            case RecordingState::None:
+            default:
+            {
+                break;
             }
         }
     });
@@ -238,9 +263,11 @@ void Instance::DolphinInstance_Heartbeat(const ToInstanceParams_Heartbeat& heart
 {
     _lastHeartbeat = std::chrono::system_clock::now();
 
-    // Acknowledge heartbeat
+    // Acknowledge heartbeat, sending over any state data the server may want.
     DolphinIpcToServerData ipcData;
     std::shared_ptr<ToServerParams_OnInstanceHeartbeatAcknowledged> data = std::make_shared<ToServerParams_OnInstanceHeartbeatAcknowledged>();
+    data->_isRecording = _instanceState == RecordingState::Recording;
+    data->_isPaused = Core::GetState() == Core::State::Paused;
     ipcData._call = DolphinServerIpcCall::DolphinServer_OnInstanceHeartbeatAcknowledged;
     ipcData._params._onInstanceHeartbeatAcknowledged = data;
     ipcSendToServer(ipcData);
@@ -255,21 +282,12 @@ void Instance::DolphinInstance_Terminate(const ToInstanceParams_Terminate& termi
 
 void Instance::DolphinInstance_StartRecordingInput(const ToInstanceParams_StartRecordingInput& beginRecordingInputParams)
 {
-    _isRecording = true;
+    _instanceState = RecordingState::Recording;
 }
 
 void Instance::DolphinInstance_StopRecordingInput(const ToInstanceParams_StopRecordingInput& stopRecordingInputParams)
 {
-    _isRecording = false;
-
-    DolphinIpcToServerData ipcData;
-    std::shared_ptr<ToServerParams_OnInstanceRecordingStopped> data = std::make_shared<ToServerParams_OnInstanceRecordingStopped>();
-    data->_inputStates = _recordingInputs;
-    ipcData._call = DolphinServerIpcCall::DolphinServer_OnInstanceRecordingStopped;
-    ipcData._params._onInstanceRecordingStopped = data;
-    ipcSendToServer(ipcData);
-
-    _recordingInputs.clear();
+    StopRecording();
 }
 
 void Instance::DolphinInstance_PauseEmulation(const ToInstanceParams_PauseEmulation& pauseEmulationParams)
@@ -292,7 +310,7 @@ void Instance::DolphinInstance_PlayInputs(const ToInstanceParams_PlayInputs& pla
 {
     // These vectors can be masive, use std::move to avoid an extra alloc (should be safe since _inputStates is not used after this)
     _playbackInputs = std::move(playInputsParams._inputStates);
-    _isPlayingInput = true;
+    _instanceState = RecordingState::Playback;
 }
 
 void Instance::UpdateRunningFlag()
@@ -307,11 +325,13 @@ void Instance::UpdateRunningFlag()
     // Close if no heartbeat command sent over IPC recently
     if (std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now() - _lastHeartbeat) > std::chrono::seconds(10))
     {
-        // RequestShutdown();
+        RequestShutdown();
     }
 
     if (_shutdown_requested.TestAndClear())
     {
+        StopRecording();
+
         const auto ios = IOS::HLE::GetIOS();
         const auto stm = ios ? ios->GetDeviceByName("/dev/stm/eventhook") : nullptr;
         if (!_tried_graceful_shutdown.IsSet() && stm &&
@@ -327,6 +347,25 @@ void Instance::UpdateRunningFlag()
     }
 }
 
+void Instance::StopRecording()
+{
+    if (_instanceState != RecordingState::Recording)
+    {
+        return;
+    }
+
+    _instanceState = RecordingState::None;
+
+    DolphinIpcToServerData ipcData;
+    std::shared_ptr<ToServerParams_OnInstanceRecordingStopped> data = std::make_shared<ToServerParams_OnInstanceRecordingStopped>();
+    data->_inputStates = std::move(_recordingInputs);
+    ipcData._call = DolphinServerIpcCall::DolphinServer_OnInstanceRecordingStopped;
+    ipcData._params._onInstanceRecordingStopped = data;
+    ipcSendToServer(ipcData);
+
+    _recordingInputs.clear();
+}
+
 void Instance::Stop()
 {
     _running.Clear();
@@ -336,3 +375,5 @@ void Instance::RequestShutdown()
 {
     _shutdown_requested.Set();
 }
+
+#pragma optimize("", on)

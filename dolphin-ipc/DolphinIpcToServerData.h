@@ -29,9 +29,14 @@ struct ToServerParams_OnInstanceConnected
 
 struct ToServerParams_OnInstanceHeartbeatAcknowledged
 {
+	bool _isRecording = false;
+	bool _isPaused = false;
+
 	template <class Archive>
 	void serialize(Archive& ar)
 	{
+		ar(_isRecording);
+		ar(_isPaused);
 	}
 };
 
