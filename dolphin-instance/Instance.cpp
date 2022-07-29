@@ -3,7 +3,6 @@
 
 #include "Instance.h"
 
-#include "InstanceConfigLoader.h"
 #include "MockServer.h"
 
 // Dolphin includes
@@ -33,21 +32,23 @@
 
 #pragma optimize("", off)
 
-Instance::Instance(const std::string& instanceId, bool recordOnLaunch)
+Instance::Instance(const InstanceBootParameters& bootParams)
 {
-    initializeChannels(instanceId, true);
+    initializeChannels(bootParams.instanceId, true);
 
-    if (recordOnLaunch)
+    if (bootParams.recordOnLaunch)
     {
         _instanceState = RecordingState::Recording;
     }
     _instanceState = RecordingState::Recording;
 
     // For debugging some parts of IPC locally
-    if (instanceId == "MOCK")
+    if (bootParams.instanceId == "MOCK")
     {
-        _mockServer = std::make_shared<MockServer>(instanceId);
+        _mockServer = std::make_shared<MockServer>(bootParams.instanceId);
     }
+
+    SConfig::GetInstance().bBootToPause = bootParams.pauseOnBoot;
 }
 
 Instance::~Instance()
@@ -69,7 +70,6 @@ bool Instance::Init()
     ipcSendToServer(ipcData);
 
     InitControllers();
-    Config::AddLayer(GenerateInstanceConfigLoader());
     PrepareForTASInput();
 
     return true;
@@ -298,7 +298,7 @@ void Instance::DolphinInstance_PauseEmulation(const ToInstanceParams_PauseEmulat
     }
 }
 
-void Instance::DolphinInstance_UnpauseEmulation(const ToInstanceParams_UnpauseEmulation& unpauseEmulationParams)
+void Instance::DolphinInstance_ResumeEmulation(const ToInstanceParams_ResumeEmulation& resumeEmulationParams)
 {
     if (Core::GetState() == Core::State::Paused)
     {

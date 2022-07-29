@@ -5,12 +5,10 @@
     <ClCompile Include="InstanceHeadless.cpp" />
     <ClCompile Include="MainNoGUI.cpp" />
     <ClCompile Include="InstanceWin32.cpp" />
-    <ClCompile Include="InstanceConfigLoader.cpp" />
     <ClCompile Include="MockServer.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Instance.h" />
-    <ClInclude Include="InstanceConfigLoader.h" />
     <ClInclude Include="MockServer.h" />
   </ItemGroup>
   <ItemGroup>

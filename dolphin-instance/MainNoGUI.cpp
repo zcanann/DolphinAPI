@@ -136,30 +136,35 @@ static std::unique_ptr<Instance> GetInstance(const optparse::Values& options)
 {
     std::string platformName = static_cast<const char*>(options.get("platform"));
     std::string instanceId = static_cast<const char*>(options.get("instanceId"));
-    bool recordOnLaunch = options.is_set("record");
 
     if (instanceId.empty())
     {
         instanceId = "MOCK";
     }
 
+    InstanceBootParameters params;
+
+    params.instanceId = instanceId;
+    params.recordOnLaunch = options.is_set("record");
+    params.pauseOnBoot = options.is_set("pause");
+
     #if HAVE_X11
         if (platformName == "x11" || platformName.empty())
-            return Instance::CreateX11Instance(instanceId, recordOnLaunch);
+            return Instance::CreateX11Instance(params);
     #endif
 
     #ifdef __linux__
         if (platformName == "fbdev" || platformName.empty())
-            return Instance::CreateFBDevInstance(instanceId, recordOnLaunch);
+            return Instance::CreateFBDevInstance(params);
     #endif
 
     #ifdef _WIN32
         if (platformName == "win32" || platformName.empty())
-            return Instance::CreateWin32Instance(instanceId, recordOnLaunch);
+            return Instance::CreateWin32Instance(params);
     #endif
 
     if (platformName == "headless" || platformName.empty())
-        return Instance::CreateHeadlessInstance(instanceId, recordOnLaunch);
+        return Instance::CreateHeadlessInstance(params);
 
     return nullptr;
 }
@@ -194,6 +199,7 @@ std::unique_ptr<optparse::OptionParser> createParser()
         .help("A unique instance identifier used for creating IPC channels.");
 
     parser->add_option("-r", "--record").action("store_true").help("Start recording input on launch");
+    parser->add_option("-z", "--pause").action("store_true").help("Pause emulation on launch");
 
     return parser;
 }
@@ -278,7 +284,9 @@ int main(int argc, char* argv[])
     Core::AddOnStateChangedCallback([](Core::State state)
     {
         if (state == Core::State::Uninitialized)
-        PlatformInstance->Stop();
+        {
+            PlatformInstance->Stop();
+        }
     });
 
     #ifdef _WIN32

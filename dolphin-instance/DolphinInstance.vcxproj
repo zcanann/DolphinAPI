@@ -42,7 +42,6 @@
   </ItemDefinitionGroup>
   <Import Project="$(ExternalsDir)ExternalsReferenceAll.props" />
   <ItemGroup>
-    <ClCompile Include="InstanceConfigLoader.cpp" />
     <ClCompile Include="MainNoGUI.cpp" />
     <ClCompile Include="Instance.cpp" />
     <ClCompile Include="InstanceHeadless.cpp" />
@@ -57,7 +56,6 @@
     <SourceFiles Include="$(TargetPath)" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="InstanceConfigLoader.h" />
     <ClInclude Include="Instance.h" />
     <ClInclude Include="MockServer.h" />
   </ItemGroup>

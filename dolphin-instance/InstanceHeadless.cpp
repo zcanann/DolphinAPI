@@ -12,7 +12,7 @@
 class InstanceHeadless : public Instance
 {
 public:
-    InstanceHeadless(const std::string& instanceId, bool recordOnLaunch);
+    InstanceHeadless(const InstanceBootParameters& bootParams);
 
     void SetTitle(const std::string& title) override;
     void MainLoop() override;
@@ -20,7 +20,7 @@ public:
     WindowSystemInfo GetWindowSystemInfo() const override;
 };
 
-InstanceHeadless::InstanceHeadless(const std::string& instanceId, bool recordOnLaunch) : Instance(instanceId, recordOnLaunch)
+InstanceHeadless::InstanceHeadless(const InstanceBootParameters& bootParams) : Instance(bootParams)
 {
 }
 
@@ -49,7 +49,7 @@ WindowSystemInfo InstanceHeadless::GetWindowSystemInfo() const
     return wsi;
 }
 
-std::unique_ptr<Instance> Instance::CreateHeadlessInstance(const std::string& instanceId, bool recordOnLaunch)
+std::unique_ptr<Instance> Instance::CreateHeadlessInstance(const InstanceBootParameters& bootParams)
 {
-    return std::make_unique<InstanceHeadless>(instanceId, recordOnLaunch);
+    return std::make_unique<InstanceHeadless>(bootParams);
 }

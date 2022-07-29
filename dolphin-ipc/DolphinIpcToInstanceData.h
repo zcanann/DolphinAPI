@@ -16,7 +16,7 @@ enum class DolphinInstanceIpcCall
 	DolphinInstance_StartRecordingInput,
 	DolphinInstance_StopRecordingInput,
 	DolphinInstance_PauseEmulation,
-	DolphinInstance_UnpauseEmulation,
+	DolphinInstance_ResumeEmulation,
 	DolphinInstance_PlayInputs,
 };
 
@@ -71,7 +71,7 @@ struct ToInstanceParams_PauseEmulation
 	}
 };
 
-struct ToInstanceParams_UnpauseEmulation
+struct ToInstanceParams_ResumeEmulation
 {
 	template <class Archive>
 	void serialize(Archive& ar)
@@ -101,7 +101,7 @@ union DolphinIpcToInstanceDataParams
 	std::shared_ptr<ToInstanceParams_StartRecordingInput> _startRecordingInputParams;
 	std::shared_ptr<ToInstanceParams_StopRecordingInput> _stopRecordingInputParams;
 	std::shared_ptr<ToInstanceParams_PauseEmulation> _pauseEmulationParams;
-	std::shared_ptr<ToInstanceParams_UnpauseEmulation> _unpauseEmulationParams;
+	std::shared_ptr<ToInstanceParams_ResumeEmulation> _resumeEmulationParams;
 	std::shared_ptr<ToInstanceParams_PlayInputs> _playInputsParams;
 };
 
@@ -171,13 +171,13 @@ struct DolphinIpcToInstanceData
 				ar(*(_params._pauseEmulationParams));
 				break;
 			}
-			case DolphinInstanceIpcCall::DolphinInstance_UnpauseEmulation:
+			case DolphinInstanceIpcCall::DolphinInstance_ResumeEmulation:
 			{
-				if (!_params._unpauseEmulationParams)
+				if (!_params._resumeEmulationParams)
 				{
-					_params._unpauseEmulationParams = std::make_shared<ToInstanceParams_UnpauseEmulation>();
+					_params._resumeEmulationParams = std::make_shared<ToInstanceParams_ResumeEmulation>();
 				}
-				ar(*(_params._unpauseEmulationParams));
+				ar(*(_params._resumeEmulationParams));
 				break;
 			}
 			case DolphinInstanceIpcCall::DolphinInstance_PlayInputs:
