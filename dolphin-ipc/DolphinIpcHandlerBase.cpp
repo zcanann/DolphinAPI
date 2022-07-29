@@ -75,12 +75,12 @@ void DolphinIpcHandlerBase::ipcSendData(ipc::channel* channel, const T& data)
         std::stringstream memoryStream(std::ios::binary | std::ios::out | std::ios::in);
         cereal::BinaryOutputArchive serializer = { memoryStream };
         serializer(data);
-        std::vector<uint8_t> buffer = std::vector<uint8_t>(std::istream_iterator<uint8_t>(memoryStream), std::istream_iterator<uint8_t>());
+        std::string dataBuffer = memoryStream.str();
 
         std::cout << __func__ << ": try send..." << std::endl;
-        if (channel->try_send(ipc::buff_t(buffer.data(), buffer.size())))
+        if (channel->send(dataBuffer))
         {
-            std::cout << __func__ << ": sent " << buffer.size() << " bytes" << std::endl;
+            std::cout << __func__ << ": sent " << dataBuffer.size() << " bytes" << std::endl;
         }
     }
     else
@@ -101,13 +101,13 @@ void DolphinIpcHandlerBase::ipcReadData(ipc::channel* channel, std::function<voi
 
     while (!rawData.empty())
     {
-        std::cout << __func__ << ": recv " << rawData.size() << " bytes" << std::endl;
+        size_t dataSize = rawData.size();
+
+        std::cout << __func__ << ": recv " << dataSize << " bytes" << std::endl;
 
         T data;
-        std::stringstream memoryStream(std::ios::binary | std::ios::out | std::ios::in);
-        cereal::BinaryOutputArchive bufferToMemoryStream = { memoryStream };
-        bufferToMemoryStream(cereal::binary_data(rawData.data(), rawData.size()));
-        cereal::BinaryInputArchive deserializer(memoryStream);
+        std::istringstream iss(std::string((char*)rawData.data(), dataSize), std::ios::binary);
+        cereal::BinaryInputArchive deserializer(iss);
         deserializer(data);
         onDeserialize(data);
 

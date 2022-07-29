@@ -58,6 +58,7 @@
   <ItemGroup>
     <ClInclude Include="Instance.h" />
     <ClInclude Include="MockServer.h" />
+    <ClInclude Include="TemplateHelpers.h" />
   </ItemGroup>
   <ItemGroup>
     <Manifest Include="DolphinInstance.exe.manifest" />

@@ -4,6 +4,7 @@
 #include "Instance.h"
 
 #include "MockServer.h"
+#include "TemplateHelpers.h"
 
 // Dolphin includes
 #include "Core/Config/MainSettings.h"
@@ -30,25 +31,33 @@
 #include "InputCommon/InputConfig.h"
 #include "VideoCommon/VideoConfig.h"
 
-#pragma optimize("", off)
-
 Instance::Instance(const InstanceBootParameters& bootParams)
 {
     initializeChannels(bootParams.instanceId, true);
 
-    if (bootParams.recordOnLaunch)
-    {
-        _instanceState = RecordingState::Recording;
-    }
-    _instanceState = RecordingState::Recording;
+    bool recordOnLaunch = bootParams.recordOnLaunch;
 
     // For debugging some parts of IPC locally
     if (bootParams.instanceId == "MOCK")
     {
         _mockServer = std::make_shared<MockServer>(bootParams.instanceId);
+        recordOnLaunch = true;
+
+        for (int index = 0; index < 800000; index++)
+        {
+            _recordingInputs.push_back(DolphinControllerState());
+        }
     }
 
-    SConfig::GetInstance().bBootToPause = bootParams.pauseOnBoot;
+    if (recordOnLaunch)
+    {
+        _instanceState = RecordingState::Recording;
+    }
+
+    if (bootParams.pauseOnBoot)
+    {
+        SConfig::GetInstance().bBootToPause = bootParams.pauseOnBoot;
+    }
 }
 
 Instance::~Instance()
@@ -282,7 +291,12 @@ void Instance::DolphinInstance_Terminate(const ToInstanceParams_Terminate& termi
 
 void Instance::DolphinInstance_StartRecordingInput(const ToInstanceParams_StartRecordingInput& beginRecordingInputParams)
 {
-    _instanceState = RecordingState::Recording;
+    if (_instanceState != RecordingState::Recording)
+    {
+        // TODO: Clear existing recording inputs if any
+
+        _instanceState = RecordingState::Recording;
+    }
 }
 
 void Instance::DolphinInstance_StopRecordingInput(const ToInstanceParams_StopRecordingInput& stopRecordingInputParams)
@@ -323,7 +337,7 @@ void Instance::UpdateRunningFlag()
     }
 
     // Close if no heartbeat command sent over IPC recently
-    if (std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now() - _lastHeartbeat) > std::chrono::seconds(10))
+    if (std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now() - _lastHeartbeat) > std::chrono::seconds(15))
     {
         RequestShutdown();
     }
@@ -358,7 +372,7 @@ void Instance::StopRecording()
 
     DolphinIpcToServerData ipcData;
     std::shared_ptr<ToServerParams_OnInstanceRecordingStopped> data = std::make_shared<ToServerParams_OnInstanceRecordingStopped>();
-    data->_inputStates = std::move(_recordingInputs);
+    data->_inputStates = _recordingInputs;
     ipcData._call = DolphinServerIpcCall::DolphinServer_OnInstanceRecordingStopped;
     ipcData._params._onInstanceRecordingStopped = data;
     ipcSendToServer(ipcData);
@@ -375,5 +389,3 @@ void Instance::RequestShutdown()
 {
     _shutdown_requested.Set();
 }
-
-#pragma optimize("", on)
