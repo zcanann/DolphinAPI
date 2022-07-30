@@ -106,8 +106,8 @@ void DolphinIpcHandlerBase::ipcReadData(ipc::channel* channel, std::function<voi
         std::cout << __func__ << ": recv " << dataSize << " bytes" << std::endl;
 
         T data;
-        std::istringstream iss(std::string((char*)rawData.data(), dataSize), std::ios::binary);
-        cereal::BinaryInputArchive deserializer(iss);
+        std::istringstream memoryStream(std::string((char*)rawData.data(), dataSize), std::ios::binary);
+        cereal::BinaryInputArchive deserializer(memoryStream);
         deserializer(data);
         onDeserialize(data);
 

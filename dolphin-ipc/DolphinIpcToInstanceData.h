@@ -15,7 +15,7 @@ enum class DolphinInstanceIpcCall
 	DolphinInstance_Terminate,
 	DolphinInstance_StartRecordingInput,
 	DolphinInstance_StopRecordingInput,
-	DolphinInstance_PauseEmulation,
+	DolphinInstance_PauseEmulation, 
 	DolphinInstance_ResumeEmulation,
 	DolphinInstance_PlayInputs,
 };
