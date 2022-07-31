@@ -136,6 +136,7 @@ void DolphinIpcHandlerBase::onInstanceToServerDataReceived(const DolphinIpcToSer
         case DolphinServerIpcCall::DolphinServer_OnInstanceHeartbeatAcknowledged: DolphinServer_OnInstanceHeartbeatAcknowledged(*data._params._onInstanceHeartbeatAcknowledged); break;
         case DolphinServerIpcCall::DolphinServer_OnInstanceTerminated: DolphinServer_OnInstanceTerminated(*data._params._onInstanceTerminatedParams); break;
         case DolphinServerIpcCall::DolphinServer_OnInstanceRecordingStopped: DolphinServer_OnInstanceRecordingStopped(*data._params._onInstanceRecordingStopped); break;
+        case DolphinServerIpcCall::DolphinServer_OnInstanceSaveStateCreated: DolphinServer_OnInstanceSaveStateCreated(*data._params._onInstanceSaveStateCreated); break;
         case DolphinServerIpcCall::Null: default: std::cout << "NULL instance => server call!" << std::endl; break;
     }
 }

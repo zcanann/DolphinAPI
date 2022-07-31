@@ -39,3 +39,8 @@ void MockServer::DolphinServer_OnInstanceRecordingStopped(const ToServerParams_O
 {
     std::cout << "recieved " << onInstanceRecordingStopped._inputStates.size() << std::endl;
 }
+
+void MockServer::DolphinServer_OnInstanceSaveStateCreated(const ToServerParams_OnInstanceSaveStateCreated& onInstanceSaveStateCreated)
+{
+    std::cout << "save state created " << onInstanceSaveStateCreated._filePath << std::endl;
+}

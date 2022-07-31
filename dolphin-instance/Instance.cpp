@@ -37,7 +37,15 @@
 Instance::Instance(const InstanceBootParameters& bootParams)
 {
     initializeChannels(bootParams.instanceId, true);
+    InitializeLaunchOptions(bootParams);
+}
 
+Instance::~Instance()
+{
+}
+
+void Instance::InitializeLaunchOptions(const InstanceBootParameters& bootParams)
+{
     bool recordOnLaunch = bootParams.recordOnLaunch;
 
     // For debugging some parts of IPC locally
@@ -61,21 +69,6 @@ Instance::Instance(const InstanceBootParameters& bootParams)
     {
         SConfig::GetInstance().bBootToPause = bootParams.pauseOnBoot;
     }
-
-    // Send ready event to the IPC server once execution is ready
-    Core::AddOnStateChangedCallback([this](Core::State state)
-    {
-        static bool RunOnce = false;
-        if (!RunOnce && (state == Core::State::Running || state == Core::State::Paused))
-        {
-            RunOnce = true;
-            OnReadyForNextCommand();
-        }
-    });
-}
-
-Instance::~Instance()
-{
 }
 
 void Instance::SetTitle(const std::string& title)
@@ -90,6 +83,17 @@ bool Instance::Init()
     ipcData._call = DolphinServerIpcCall::DolphinServer_OnInstanceConnected;
     ipcData._params._onInstanceConnectedParams = data;
     ipcSendToServer(ipcData);
+
+    // Ipc post-ready callback
+    _coreStateEventHandle = Core::AddOnStateChangedCallback([this](Core::State state)
+    {
+        if (state == Core::State::Running || state == Core::State::Paused)
+        {
+            OnReadyForNextCommand();
+            Core::RemoveOnStateChangedCallback(&_coreStateEventHandle);
+        }
+    });
+
 
     InitControllers();
     PrepareForTASInput();
@@ -129,8 +133,6 @@ void Instance::PrepareForTASInput()
 
     Movie::SetGCInputManip([this](GCPadStatus* PadStatus, int ControllerId)
     {
-        // u64 frame = Movie::GetCurrentFrame();
-
         switch (_instanceState)
         {
             case RecordingState::Playback:
@@ -367,6 +369,13 @@ void Instance::DolphinInstance_CreateSaveState(const ToInstanceParams_CreateSave
 
         State::SaveAs(createSaveStateParams._filePath, true);
     }
+    
+    DolphinIpcToServerData ipcData;
+    std::shared_ptr<ToServerParams_OnInstanceSaveStateCreated> data = std::make_shared<ToServerParams_OnInstanceSaveStateCreated>();
+    data->_filePath = createSaveStateParams._filePath;
+    ipcData._call = DolphinServerIpcCall::DolphinServer_OnInstanceSaveStateCreated;
+    ipcData._params._onInstanceSaveStateCreated = data;
+    ipcSendToServer(ipcData);
 
     OnReadyForNextCommand();
 }
@@ -422,7 +431,6 @@ void Instance::StartRecording()
         return;
     }
 
-    _recordingStartFrame = Movie::GetCurrentFrame();
     _instanceState = RecordingState::Recording;
     Core::UpdateWantDeterminism(true);
 }

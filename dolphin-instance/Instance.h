@@ -30,6 +30,7 @@ public:
 	Instance(const InstanceBootParameters& bootParams);
 	virtual ~Instance();
 
+	void InitializeLaunchOptions(const InstanceBootParameters& bootParams);
 	bool IsRunning() const { return _running.IsSet(); }
 	bool IsWindowFocused() const { return _window_focus; }
 	bool IsWindowFullscreen() const { return _window_fullscreen; }
@@ -97,10 +98,10 @@ protected:
 		Playback,
 	};
 
+	int _coreStateEventHandle = -1;
 	RecordingState _instanceState = RecordingState::None;
 	std::vector<DolphinControllerState> _recordingInputs;
 	std::vector<DolphinControllerState> _playbackInputs;
-	int _recordingStartFrame = 0;
 
 	std::shared_ptr<MockServer> _mockServer;
 };
