@@ -11,6 +11,7 @@ enum class DolphinServerIpcCall
 {
 	Null,
 	DolphinServer_OnInstanceConnected,
+	DolphinServer_OnInstanceReady,
 	DolphinServer_OnInstanceHeartbeatAcknowledged,
 	DolphinServer_OnInstanceTerminated,
 	DolphinServer_OnInstanceRecordingStopped,
@@ -18,12 +19,17 @@ enum class DolphinServerIpcCall
 
 struct ToServerParams_OnInstanceConnected
 {
-	std::string _params;
-
 	template <class Archive>
 	void serialize(Archive& ar)
 	{
-		ar(_params);
+	}
+};
+
+struct ToServerParams_OnInstanceReady
+{
+	template <class Archive>
+	void serialize(Archive& ar)
+	{
 	}
 };
 
@@ -70,6 +76,7 @@ union DolphinIpcToServerDataParams
 	~DolphinIpcToServerDataParams() {}
 
 	std::shared_ptr<ToServerParams_OnInstanceConnected> _onInstanceConnectedParams;
+	std::shared_ptr<ToServerParams_OnInstanceReady> _onInstanceReadyParams;
 	std::shared_ptr<ToServerParams_OnInstanceHeartbeatAcknowledged> _onInstanceHeartbeatAcknowledged;
 	std::shared_ptr<ToServerParams_OnInstanceTerminated> _onInstanceTerminatedParams;
 	std::shared_ptr<ToServerParams_OnInstanceRecordingStopped> _onInstanceRecordingStopped;
@@ -94,6 +101,15 @@ struct DolphinIpcToServerData
 					_params._onInstanceConnectedParams = std::make_shared<ToServerParams_OnInstanceConnected>();
 				}
 				ar(*(_params._onInstanceConnectedParams));
+				break;
+			}
+			case DolphinServerIpcCall::DolphinServer_OnInstanceReady:
+			{
+				if (!_params._onInstanceReadyParams)
+				{
+					_params._onInstanceReadyParams = std::make_shared<ToServerParams_OnInstanceReady>();
+				}
+				ar(*(_params._onInstanceReadyParams));
 				break;
 			}
 			case DolphinServerIpcCall::DolphinServer_OnInstanceHeartbeatAcknowledged:

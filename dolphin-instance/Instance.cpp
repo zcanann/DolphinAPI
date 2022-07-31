@@ -31,6 +31,8 @@
 #include "InputCommon/InputConfig.h"
 #include "VideoCommon/VideoConfig.h"
 
+#pragma optimize("", off)
+
 Instance::Instance(const InstanceBootParameters& bootParams)
 {
     initializeChannels(bootParams.instanceId, true);
@@ -58,6 +60,17 @@ Instance::Instance(const InstanceBootParameters& bootParams)
     {
         SConfig::GetInstance().bBootToPause = bootParams.pauseOnBoot;
     }
+
+    // Send ready event to the IPC server once execution is ready
+    Core::AddOnStateChangedCallback([this](Core::State state)
+    {
+        static bool RunOnce = false;
+        if (!RunOnce && (state == Core::State::Running || state == Core::State::Paused))
+        {
+            RunOnce = true;
+            OnReadyForNextCommand();
+        }
+    });
 }
 
 Instance::~Instance()
@@ -73,7 +86,6 @@ bool Instance::Init()
     // Ipc post-connect callback
     DolphinIpcToServerData ipcData;
     std::shared_ptr<ToServerParams_OnInstanceConnected> data = std::make_shared<ToServerParams_OnInstanceConnected>();
-    data->_params = "ipc_connect_debug";
     ipcData._call = DolphinServerIpcCall::DolphinServer_OnInstanceConnected;
     ipcData._params._onInstanceConnectedParams = data;
     ipcSendToServer(ipcData);
@@ -182,6 +194,13 @@ void Instance::PrepareForTASInput()
                 if (padState.Reset)
                 {
                     ProcessorInterface::ResetButton_Tap();
+                }
+                
+                // Inputs complete! Ready for next command
+                if (_playbackInputs.size() <= 0)
+                {
+                    Core::UpdateWantDeterminism(false);
+                    OnReadyForNextCommand();
                 }
                 break;
             }
@@ -296,12 +315,16 @@ void Instance::DolphinInstance_StartRecordingInput(const ToInstanceParams_StartR
         // TODO: Clear existing recording inputs if any
 
         _instanceState = RecordingState::Recording;
+        Core::UpdateWantDeterminism(true);
     }
+
+    OnReadyForNextCommand();
 }
 
 void Instance::DolphinInstance_StopRecordingInput(const ToInstanceParams_StopRecordingInput& stopRecordingInputParams)
 {
     StopRecording();
+    OnReadyForNextCommand();
 }
 
 void Instance::DolphinInstance_PauseEmulation(const ToInstanceParams_PauseEmulation& pauseEmulationParams)
@@ -310,6 +333,8 @@ void Instance::DolphinInstance_PauseEmulation(const ToInstanceParams_PauseEmulat
     {
         Core::SetState(Core::State::Paused);
     }
+
+    OnReadyForNextCommand();
 }
 
 void Instance::DolphinInstance_ResumeEmulation(const ToInstanceParams_ResumeEmulation& resumeEmulationParams)
@@ -318,13 +343,26 @@ void Instance::DolphinInstance_ResumeEmulation(const ToInstanceParams_ResumeEmul
     {
         Core::SetState(Core::State::Running);
     }
+
+    OnReadyForNextCommand();
 }
 
 void Instance::DolphinInstance_PlayInputs(const ToInstanceParams_PlayInputs& playInputsParams)
 {
     // These vectors can be masive, use std::move to avoid an extra alloc (should be safe since _inputStates is not used after this)
     _playbackInputs = std::move(playInputsParams._inputStates);
-    _instanceState = RecordingState::Playback;
+
+    if (_playbackInputs.size() > 0)
+    {
+        _instanceState = RecordingState::Playback;
+        // Send the initial flag to force determinism, since internally this checks Movie class flags which this class does not set
+        Core::UpdateWantDeterminism(true);
+    }
+
+    if (Core::GetState() == Core::State::Paused)
+    {
+        Core::SetState(Core::State::Running);
+    }
 }
 
 void Instance::UpdateRunningFlag()
@@ -369,6 +407,7 @@ void Instance::StopRecording()
     }
 
     _instanceState = RecordingState::None;
+    Core::UpdateWantDeterminism(false);
 
     DolphinIpcToServerData ipcData;
     std::shared_ptr<ToServerParams_OnInstanceRecordingStopped> data = std::make_shared<ToServerParams_OnInstanceRecordingStopped>();
@@ -380,6 +419,15 @@ void Instance::StopRecording()
     _recordingInputs.clear();
 }
 
+void Instance::OnReadyForNextCommand()
+{
+    DolphinIpcToServerData ipcData;
+    std::shared_ptr<ToServerParams_OnInstanceReady> data = std::make_shared<ToServerParams_OnInstanceReady>();
+    ipcData._call = DolphinServerIpcCall::DolphinServer_OnInstanceReady;
+    ipcData._params._onInstanceReadyParams = data;
+    ipcSendToServer(ipcData);
+}
+
 void Instance::Stop()
 {
     _running.Clear();
@@ -389,3 +437,5 @@ void Instance::RequestShutdown()
 {
     _shutdown_requested.Set();
 }
+
+#pragma optimize("", on)

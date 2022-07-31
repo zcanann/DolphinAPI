@@ -132,6 +132,7 @@ void DolphinIpcHandlerBase::onInstanceToServerDataReceived(const DolphinIpcToSer
     switch (data._call)
     {
         case DolphinServerIpcCall::DolphinServer_OnInstanceConnected: DolphinServer_OnInstanceConnected(*data._params._onInstanceConnectedParams); break;
+        case DolphinServerIpcCall::DolphinServer_OnInstanceReady: DolphinServer_OnInstanceReady(*data._params._onInstanceReadyParams); break;
         case DolphinServerIpcCall::DolphinServer_OnInstanceHeartbeatAcknowledged: DolphinServer_OnInstanceHeartbeatAcknowledged(*data._params._onInstanceHeartbeatAcknowledged); break;
         case DolphinServerIpcCall::DolphinServer_OnInstanceTerminated: DolphinServer_OnInstanceTerminated(*data._params._onInstanceTerminatedParams); break;
         case DolphinServerIpcCall::DolphinServer_OnInstanceRecordingStopped: DolphinServer_OnInstanceRecordingStopped(*data._params._onInstanceRecordingStopped); break;

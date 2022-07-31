@@ -75,6 +75,7 @@ protected:
 
 	void UpdateRunningFlag();
 	void StopRecording();
+	void OnReadyForNextCommand();
 
 	Common::Flag _running{true};
 	Common::Flag _shutdown_requested{false};
@@ -95,6 +96,7 @@ protected:
 	RecordingState _instanceState = RecordingState::None;
 	std::vector<DolphinControllerState> _recordingInputs;
 	std::vector<DolphinControllerState> _playbackInputs;
+	int _lastRecordedFrame = 0;
 
 	std::shared_ptr<MockServer> _mockServer;
 };
