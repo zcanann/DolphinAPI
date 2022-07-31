@@ -72,6 +72,9 @@ protected:
 	virtual void DolphinInstance_PauseEmulation(const ToInstanceParams_PauseEmulation& pauseEmulationParams) override;
 	virtual void DolphinInstance_ResumeEmulation(const ToInstanceParams_ResumeEmulation& resumeEmulationParams) override;
 	virtual void DolphinInstance_PlayInputs(const ToInstanceParams_PlayInputs& playInputsParams) override;
+	virtual void DolphinInstance_FrameAdvance(const ToInstanceParams_FrameAdvance& frameAdvanceParams) override;
+	virtual void DolphinInstance_CreateSaveState(const ToInstanceParams_CreateSaveState& createSaveStateParams) override;
+	virtual void DolphinInstance_LoadSaveState(const ToInstanceParams_LoadSaveState& loadSaveStateParams) override;
 
 	void UpdateRunningFlag();
 	void StartRecording();

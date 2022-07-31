@@ -7,6 +7,7 @@
 #include "TemplateHelpers.h"
 
 // Dolphin includes
+#include "Common/FileUtil.h"
 #include "Core/Config/MainSettings.h"
 #include "Core/Config/WiimoteSettings.h"
 #include "Core/ConfigManager.h"
@@ -347,6 +348,37 @@ void Instance::DolphinInstance_PlayInputs(const ToInstanceParams_PlayInputs& pla
     {
         Core::SetState(Core::State::Running);
     }
+}
+
+void Instance::DolphinInstance_FrameAdvance(const ToInstanceParams_FrameAdvance& frameAdvanceParams)
+{
+    Core::DoFrameStep();
+    OnReadyForNextCommand();
+}
+
+void Instance::DolphinInstance_CreateSaveState(const ToInstanceParams_CreateSaveState& createSaveStateParams)
+{
+    if (!createSaveStateParams._filePath.empty())
+    {
+        if (File::Exists(createSaveStateParams._filePath))
+        {
+            File::Delete(createSaveStateParams._filePath);
+        }
+
+        State::SaveAs(createSaveStateParams._filePath, true);
+    }
+
+    OnReadyForNextCommand();
+}
+
+void Instance::DolphinInstance_LoadSaveState(const ToInstanceParams_LoadSaveState& loadSaveStateParams)
+{
+    if (File::Exists(loadSaveStateParams._filePath))
+    {
+        State::LoadAs(loadSaveStateParams._filePath);
+    }
+
+    OnReadyForNextCommand();
 }
 
 void Instance::UpdateRunningFlag()

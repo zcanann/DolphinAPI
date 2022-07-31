@@ -7,6 +7,8 @@
 #undef FMT_USE_NONTYPE_TEMPLATE_PARAMETERS
 #define FMT_USE_NONTYPE_TEMPLATE_PARAMETERS 0
 
+#undef USE_DISCORD_PRESENCE
+
 #include "Instance.h"
 
 #include <OptionParser.h>
@@ -45,21 +47,21 @@ static std::unique_ptr<Instance> PlatformInstance;
 
 static void signal_handler(int)
 {
-  const char message[] = "A signal was received. A second signal will force Dolphin to stop.\n";
-#ifdef _WIN32
-  puts(message);
-#else
-  if (write(STDERR_FILENO, message, sizeof(message)) < 0)
-  {
-  }
-#endif
+    const char message[] = "A signal was received. A second signal will force Dolphin to stop.\n";
+    #ifdef _WIN32
+        puts(message);
+    #else
+        if (write(STDERR_FILENO, message, sizeof(message)) < 0)
+        {
+        }
+    #endif
 
-  PlatformInstance->RequestShutdown();
+    PlatformInstance->RequestShutdown();
 }
 
 std::vector<std::string> Host_GetPreferredLocales()
 {
-  return {};
+    return {};
 }
 
 void Host_NotifyMapLoaded()
@@ -72,19 +74,26 @@ void Host_RefreshDSPDebuggerWindow()
 
 bool Host_UIBlocksControllerState()
 {
-  return false;
+    return false;
 }
 
 static Common::Event s_update_main_frame_event;
 void Host_Message(HostMessageID id)
 {
-  if (id == HostMessageID::WMUserStop)
-    PlatformInstance->Stop();
+    if (id == HostMessageID::WMUserStop)
+    {
+        PlatformInstance->Stop();
+    }
 }
 
 void Host_UpdateTitle(const std::string& title)
 {
-  PlatformInstance->SetTitle(title);
+    // TODO: This is crashy with save states (which call this func), figure out why
+    /*
+    if (PlatformInstance)
+    {
+        PlatformInstance->SetTitle(title);
+    }*/
 }
 
 void Host_UpdateDisasmDialog()
@@ -93,7 +102,7 @@ void Host_UpdateDisasmDialog()
 
 void Host_UpdateMainFrame()
 {
-  s_update_main_frame_event.Set();
+    s_update_main_frame_event.Set();
 }
 
 void Host_RequestRenderWindowSize(int width, int height)
@@ -102,18 +111,18 @@ void Host_RequestRenderWindowSize(int width, int height)
 
 bool Host_RendererHasFocus()
 {
-  return PlatformInstance->IsWindowFocused();
+    return PlatformInstance->IsWindowFocused();
 }
 
 bool Host_RendererHasFullFocus()
 {
-  // Mouse capturing isn't implemented
-  return Host_RendererHasFocus();
+    // Mouse capturing isn't implemented
+    return Host_RendererHasFocus();
 }
 
 bool Host_RendererIsFullscreen()
 {
-  return PlatformInstance->IsWindowFullscreen();
+    return PlatformInstance->IsWindowFullscreen();
 }
 
 void Host_YieldToUI()
@@ -123,13 +132,13 @@ void Host_YieldToUI()
 void Host_TitleChanged()
 {
 #ifdef USE_DISCORD_PRESENCE
-  Discord::UpdateDiscordPresence();
+    Discord::UpdateDiscordPresence();
 #endif
 }
 
 std::unique_ptr<GBAHostInterface> Host_CreateGBAHost(std::weak_ptr<HW::GBA::Core> core)
 {
-  return nullptr;
+    return nullptr;
 }
 
 static std::unique_ptr<Instance> GetInstance(const optparse::Values& options)

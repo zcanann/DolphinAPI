@@ -18,6 +18,9 @@ enum class DolphinInstanceIpcCall
 	DolphinInstance_PauseEmulation, 
 	DolphinInstance_ResumeEmulation,
 	DolphinInstance_PlayInputs,
+	DolphinInstance_FrameAdvance,
+	DolphinInstance_CreateSaveState,
+	DolphinInstance_LoadSaveState,
 };
 
 struct ToInstanceParams_Connect
@@ -90,6 +93,39 @@ struct ToInstanceParams_PlayInputs
 	}
 };
 
+struct ToInstanceParams_FrameAdvance
+{
+	int _numFrames = 1;
+
+	template <class Archive>
+	void serialize(Archive& ar)
+	{
+		ar(_numFrames);
+	}
+};
+
+struct ToInstanceParams_CreateSaveState
+{
+	std::string _filePath;
+
+	template <class Archive>
+	void serialize(Archive& ar)
+	{
+		ar(_filePath);
+	}
+};
+
+struct ToInstanceParams_LoadSaveState
+{
+	std::string _filePath;
+
+	template <class Archive>
+	void serialize(Archive& ar)
+	{
+		ar(_filePath);
+	}
+};
+
 union DolphinIpcToInstanceDataParams
 {
 	DolphinIpcToInstanceDataParams() : _connectParams({}) { }
@@ -103,6 +139,9 @@ union DolphinIpcToInstanceDataParams
 	std::shared_ptr<ToInstanceParams_PauseEmulation> _pauseEmulationParams;
 	std::shared_ptr<ToInstanceParams_ResumeEmulation> _resumeEmulationParams;
 	std::shared_ptr<ToInstanceParams_PlayInputs> _playInputsParams;
+	std::shared_ptr<ToInstanceParams_FrameAdvance> _frameAdvanceParams;
+	std::shared_ptr<ToInstanceParams_CreateSaveState> _createSaveStateParams;
+	std::shared_ptr<ToInstanceParams_LoadSaveState> _loadSaveStateParams;
 };
 
 struct DolphinIpcToInstanceData
@@ -187,6 +226,33 @@ struct DolphinIpcToInstanceData
 					_params._playInputsParams = std::make_shared<ToInstanceParams_PlayInputs>();
 				}
 				ar(*(_params._playInputsParams));
+				break;
+			}
+			case DolphinInstanceIpcCall::DolphinInstance_FrameAdvance:
+			{
+				if (!_params._frameAdvanceParams)
+				{
+					_params._frameAdvanceParams = std::make_shared<ToInstanceParams_FrameAdvance>();
+				}
+				ar(*(_params._frameAdvanceParams));
+				break;
+			}
+			case DolphinInstanceIpcCall::DolphinInstance_CreateSaveState:
+			{
+				if (!_params._createSaveStateParams)
+				{
+					_params._createSaveStateParams = std::make_shared<ToInstanceParams_CreateSaveState>();
+				}
+				ar(*(_params._createSaveStateParams));
+				break;
+			}
+			case DolphinInstanceIpcCall::DolphinInstance_LoadSaveState:
+			{
+				if (!_params._loadSaveStateParams)
+				{
+					_params._loadSaveStateParams = std::make_shared<ToInstanceParams_LoadSaveState>();
+				}
+				ar(*(_params._loadSaveStateParams));
 				break;
 			}
 			case DolphinInstanceIpcCall::Null: default: break;
