@@ -74,6 +74,7 @@ protected:
 	virtual void DolphinInstance_PlayInputs(const ToInstanceParams_PlayInputs& playInputsParams) override;
 
 	void UpdateRunningFlag();
+	void StartRecording();
 	void StopRecording();
 	void OnReadyForNextCommand();
 
@@ -96,7 +97,7 @@ protected:
 	RecordingState _instanceState = RecordingState::None;
 	std::vector<DolphinControllerState> _recordingInputs;
 	std::vector<DolphinControllerState> _playbackInputs;
-	int _lastRecordedFrame = 0;
+	int _recordingStartFrame = 0;
 
 	std::shared_ptr<MockServer> _mockServer;
 };

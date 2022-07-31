@@ -53,7 +53,7 @@ Instance::Instance(const InstanceBootParameters& bootParams)
 
     if (recordOnLaunch)
     {
-        _instanceState = RecordingState::Recording;
+        StartRecording();
     }
 
     if (bootParams.pauseOnBoot)
@@ -139,8 +139,8 @@ void Instance::PrepareForTASInput()
                     return;
                 }
 
-                DolphinControllerState padState = _playbackInputs.back();
-                _playbackInputs.pop_back();
+                DolphinControllerState padState = _playbackInputs.front();
+                _playbackInputs.erase(_playbackInputs.begin());
 
                 PadStatus->isConnected = padState.IsConnected;
 
@@ -155,18 +155,10 @@ void Instance::PrepareForTASInput()
 
                 PadStatus->button = 0;
                 PadStatus->button |= PAD_USE_ORIGIN;
-
-                if (padState.A)
-                {
-                    PadStatus->button |= PAD_BUTTON_A;
-                    PadStatus->analogA = 0xFF;
-                }
-                if (padState.B)
-                {
-                    PadStatus->button |= PAD_BUTTON_B;
-                    PadStatus->analogB = 0xFF;
-                }
-
+                PadStatus->button |= padState.A ? PAD_BUTTON_A : 0;
+                PadStatus->analogA = padState.A ? 0xFF : 0x00;
+                PadStatus->button |= padState.B ? PAD_BUTTON_B : 0;
+                PadStatus->analogB = padState.B ? 0xFF : 0x00;
                 PadStatus->button |= padState.X ? PAD_BUTTON_X : 0;
                 PadStatus->button |= padState.Y ? PAD_BUTTON_Y : 0;
                 PadStatus->button |= padState.Z ? PAD_TRIGGER_Z : 0;
@@ -199,7 +191,7 @@ void Instance::PrepareForTASInput()
                 // Inputs complete! Ready for next command
                 if (_playbackInputs.size() <= 0)
                 {
-                    Core::UpdateWantDeterminism(false);
+                    Core::QueueHostJob([=] { Core::UpdateWantDeterminism(false); });
                     OnReadyForNextCommand();
                 }
                 break;
@@ -284,7 +276,6 @@ void Instance::PrepareForTASInput()
 
 void Instance::DolphinInstance_Connect(const ToInstanceParams_Connect& connectParams)
 {
-
 }
 
 void Instance::DolphinInstance_Heartbeat(const ToInstanceParams_Heartbeat& heartbeatParams)
@@ -303,21 +294,14 @@ void Instance::DolphinInstance_Heartbeat(const ToInstanceParams_Heartbeat& heart
 
 void Instance::DolphinInstance_Terminate(const ToInstanceParams_Terminate& terminateParams)
 {
-    // TODO: Send off any existing recording data?
-
+    StopRecording();
     RequestShutdown();
 }
 
 void Instance::DolphinInstance_StartRecordingInput(const ToInstanceParams_StartRecordingInput& beginRecordingInputParams)
 {
-    if (_instanceState != RecordingState::Recording)
-    {
-        // TODO: Clear existing recording inputs if any
-
-        _instanceState = RecordingState::Recording;
-        Core::UpdateWantDeterminism(true);
-    }
-
+    StopRecording();
+    StartRecording();
     OnReadyForNextCommand();
 }
 
@@ -397,6 +381,18 @@ void Instance::UpdateRunningFlag()
             _running.Clear();
         }
     }
+}
+
+void Instance::StartRecording()
+{
+    if (_instanceState == RecordingState::Recording)
+    {
+        return;
+    }
+
+    _recordingStartFrame = Movie::GetCurrentFrame();
+    _instanceState = RecordingState::Recording;
+    Core::UpdateWantDeterminism(true);
 }
 
 void Instance::StopRecording()
