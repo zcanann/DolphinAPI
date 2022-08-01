@@ -79,6 +79,9 @@
       <Project>{02e9460e-1bba-3bad-991a-ff484b0adc55}</Project>
     </ProjectReference>
   </ItemGroup>
+  <ItemGroup>
+    <None Include="cpp.hint" />
+  </ItemGroup>
   <Target Name="AfterBuild" Inputs="@(SourceFiles)" Outputs="@(SourceFiles -> '$(BinaryOutputDir)%(Filename)%(Extension)')">
     <Message Text="Copy: @(SourceFiles) -&gt; $(BinaryOutputDir)" Importance="High" />
     <Copy SourceFiles="@(SourceFiles)" DestinationFolder="$(BinaryOutputDir)" />

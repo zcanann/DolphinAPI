@@ -34,28 +34,33 @@ public:
 
 	// Instance implemented functions
 protected:
-	virtual void DolphinInstance_Connect(const ToInstanceParams_Connect& connectParams) { NOT_IMPLEMENTED(); }
-	virtual void DolphinInstance_Heartbeat(const ToInstanceParams_Heartbeat& heartbeatParams) { NOT_IMPLEMENTED(); }
-	virtual void DolphinInstance_Terminate(const ToInstanceParams_Terminate& terminateParams) { NOT_IMPLEMENTED(); }
-	virtual void DolphinInstance_StartRecordingInput(const ToInstanceParams_StartRecordingInput& startRecordingInputParams) { NOT_IMPLEMENTED(); }
-	virtual void DolphinInstance_StopRecordingInput(const ToInstanceParams_StopRecordingInput& stopRecordingInputParams) { NOT_IMPLEMENTED(); }
-	virtual void DolphinInstance_PauseEmulation(const ToInstanceParams_PauseEmulation& pauseEmulationParams) { NOT_IMPLEMENTED(); }
-	virtual void DolphinInstance_ResumeEmulation(const ToInstanceParams_ResumeEmulation& resumeEmulationParams) { NOT_IMPLEMENTED(); }
-	virtual void DolphinInstance_PlayInputs(const ToInstanceParams_PlayInputs& playInputsParams) { NOT_IMPLEMENTED(); }
-	virtual void DolphinInstance_FrameAdvance(const ToInstanceParams_FrameAdvance& frameAdvanceParams) { NOT_IMPLEMENTED(); }
-	virtual void DolphinInstance_CreateSaveState(const ToInstanceParams_CreateSaveState& createSaveStateParams) { NOT_IMPLEMENTED(); }
-	virtual void DolphinInstance_LoadSaveState(const ToInstanceParams_LoadSaveState& loadSaveStateParams) { NOT_IMPLEMENTED(); }
-	virtual void DolphinInstance_CreateMemoryCard(const ToInstanceParams_CreateMemoryCard& createMemoryCardParams) { NOT_IMPLEMENTED(); }
+	#define INSTANCE_FUNC(Name) virtual void DolphinInstance_ ## Name(const ToInstanceParams_ ## Name& params ## Name) { NOT_IMPLEMENTED(); }
+	#define INSTANCE_FUNC_OVERRIDE(Name) virtual void DolphinInstance_ ## Name(const ToInstanceParams_ ## Name& params ## Name) override;
+	INSTANCE_FUNC(Connect)
+	INSTANCE_FUNC(Heartbeat)
+	INSTANCE_FUNC(Terminate)
+	INSTANCE_FUNC(StartRecordingInput)
+	INSTANCE_FUNC(StopRecordingInput)
+	INSTANCE_FUNC(PauseEmulation)
+	INSTANCE_FUNC(ResumeEmulation)
+	INSTANCE_FUNC(PlayInputs)
+	INSTANCE_FUNC(FrameAdvance)
+	INSTANCE_FUNC(CreateSaveState)
+	INSTANCE_FUNC(LoadSaveState)
+	INSTANCE_FUNC(FormatMemoryCard)
 
 	// Server implemented functions
 protected:
-	virtual void DolphinServer_OnInstanceConnected(const ToServerParams_OnInstanceConnected& onInstanceConnectedParams) { NOT_IMPLEMENTED(); }
-	virtual void DolphinServer_OnInstanceReady(const ToServerParams_OnInstanceReady& onInstanceReadyParams) { NOT_IMPLEMENTED(); }
-	virtual void DolphinServer_OnInstanceHeartbeatAcknowledged(const ToServerParams_OnInstanceHeartbeatAcknowledged& onInstanceHeartbeatAcknowledgedParams) { NOT_IMPLEMENTED(); }
-	virtual void DolphinServer_OnInstanceLogOutput(const ToServerParams_OnInstanceLogOutput& onInstanceLogOutputParams) { NOT_IMPLEMENTED(); }
-	virtual void DolphinServer_OnInstanceTerminated(const ToServerParams_OnInstanceTerminated& onInstanceTerminatedParams) { NOT_IMPLEMENTED(); }
-	virtual void DolphinServer_OnInstanceRecordingStopped(const ToServerParams_OnInstanceRecordingStopped& onInstanceRecordingStopped) { NOT_IMPLEMENTED(); }
-	virtual void DolphinServer_OnInstanceSaveStateCreated(const ToServerParams_OnInstanceSaveStateCreated& onInstanceSaveStateCreated) { NOT_IMPLEMENTED(); }
+	#define SERVER_FUNC(Name) virtual void DolphinServer_ ## Name(const ToServerParams_ ## Name& params ## Name) { NOT_IMPLEMENTED(); }
+	#define SERVER_FUNC_OVERRIDE(Name) virtual void DolphinServer_ ## Name(const ToServerParams_ ## Name& params ## Name) override;
+	SERVER_FUNC(OnInstanceConnected)
+	SERVER_FUNC(OnInstanceReady)
+	SERVER_FUNC(OnInstanceHeartbeatAcknowledged)
+	SERVER_FUNC(OnInstanceLogOutput)
+	SERVER_FUNC(OnInstanceTerminated)
+	SERVER_FUNC(OnInstanceRecordingStopped)
+	SERVER_FUNC(OnInstanceSaveStateCreated)
+	SERVER_FUNC(OnInstanceMemoryCardFormatted)
 
 private:
 	template<class T>

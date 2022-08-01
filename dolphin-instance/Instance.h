@@ -66,18 +66,18 @@ public:
 #endif
 
 protected:
-	virtual void DolphinInstance_Connect(const ToInstanceParams_Connect& connectParams) override;
-	virtual void DolphinInstance_Heartbeat(const ToInstanceParams_Heartbeat& heartbeatParams) override;
-	virtual void DolphinInstance_Terminate(const ToInstanceParams_Terminate& terminateParams) override;
-	virtual void DolphinInstance_StartRecordingInput(const ToInstanceParams_StartRecordingInput& beginRecordingInputParams) override;
-	virtual void DolphinInstance_StopRecordingInput(const ToInstanceParams_StopRecordingInput& stopRecordingInputParams) override;
-	virtual void DolphinInstance_PauseEmulation(const ToInstanceParams_PauseEmulation& pauseEmulationParams) override;
-	virtual void DolphinInstance_ResumeEmulation(const ToInstanceParams_ResumeEmulation& resumeEmulationParams) override;
-	virtual void DolphinInstance_PlayInputs(const ToInstanceParams_PlayInputs& playInputsParams) override;
-	virtual void DolphinInstance_FrameAdvance(const ToInstanceParams_FrameAdvance& frameAdvanceParams) override;
-	virtual void DolphinInstance_CreateSaveState(const ToInstanceParams_CreateSaveState& createSaveStateParams) override;
-	virtual void DolphinInstance_LoadSaveState(const ToInstanceParams_LoadSaveState& loadSaveStateParams) override;
-	virtual void DolphinInstance_CreateMemoryCard(const ToInstanceParams_CreateMemoryCard& createMemoryCardParams) override;
+	INSTANCE_FUNC_OVERRIDE(Connect)
+	INSTANCE_FUNC_OVERRIDE(Heartbeat)
+	INSTANCE_FUNC_OVERRIDE(Terminate)
+	INSTANCE_FUNC_OVERRIDE(StartRecordingInput)
+	INSTANCE_FUNC_OVERRIDE(StopRecordingInput)
+	INSTANCE_FUNC_OVERRIDE(PauseEmulation)
+	INSTANCE_FUNC_OVERRIDE(ResumeEmulation)
+	INSTANCE_FUNC_OVERRIDE(PlayInputs)
+	INSTANCE_FUNC_OVERRIDE(FrameAdvance)
+	INSTANCE_FUNC_OVERRIDE(CreateSaveState)
+	INSTANCE_FUNC_OVERRIDE(LoadSaveState)
+	INSTANCE_FUNC_OVERRIDE(FormatMemoryCard)
 
 	void UpdateRunningFlag();
 	void StartRecording();

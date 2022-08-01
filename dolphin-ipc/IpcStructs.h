@@ -2,6 +2,13 @@
 
 #include "external/cereal/cereal.hpp"
 
+enum class DolphinSlot
+{
+    SlotA,
+    SlotB,
+    SP1,
+};
+
 struct DolphinControllerState
 {
     bool Start, A, B, X, Y, Z;  // Binary buttons, 6 bits

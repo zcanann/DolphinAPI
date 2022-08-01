@@ -92,7 +92,7 @@ bool Instance::Init()
     DolphinIpcToServerData ipcData;
     std::shared_ptr<ToServerParams_OnInstanceConnected> data = std::make_shared<ToServerParams_OnInstanceConnected>();
     ipcData._call = DolphinServerIpcCall::DolphinServer_OnInstanceConnected;
-    ipcData._params._onInstanceConnectedParams = data;
+    ipcData._params._paramsOnInstanceConnected = data;
     ipcSendToServer(ipcData);
 
     // Ipc post-ready callback
@@ -288,11 +288,11 @@ void Instance::PrepareForTASInput()
     // Movie::BeginRecordingInput(controllers, wiimotes);*/
 }
 
-void Instance::DolphinInstance_Connect(const ToInstanceParams_Connect& connectParams)
+void Instance::DolphinInstance_Connect(const ToInstanceParams_Connect& params)
 {
 }
 
-void Instance::DolphinInstance_Heartbeat(const ToInstanceParams_Heartbeat& heartbeatParams)
+void Instance::DolphinInstance_Heartbeat(const ToInstanceParams_Heartbeat& params)
 {
     _lastHeartbeat = std::chrono::system_clock::now();
 
@@ -302,30 +302,30 @@ void Instance::DolphinInstance_Heartbeat(const ToInstanceParams_Heartbeat& heart
     data->_isRecording = _instanceState == RecordingState::Recording;
     data->_isPaused = Core::GetState() == Core::State::Paused;
     ipcData._call = DolphinServerIpcCall::DolphinServer_OnInstanceHeartbeatAcknowledged;
-    ipcData._params._onInstanceHeartbeatAcknowledged = data;
+    ipcData._params._paramsOnInstanceHeartbeatAcknowledged = data;
     ipcSendToServer(ipcData);
 }
 
-void Instance::DolphinInstance_Terminate(const ToInstanceParams_Terminate& terminateParams)
+void Instance::DolphinInstance_Terminate(const ToInstanceParams_Terminate& params)
 {
     StopRecording();
     RequestShutdown();
 }
 
-void Instance::DolphinInstance_StartRecordingInput(const ToInstanceParams_StartRecordingInput& beginRecordingInputParams)
+void Instance::DolphinInstance_StartRecordingInput(const ToInstanceParams_StartRecordingInput& params)
 {
     StopRecording();
     StartRecording();
     OnReadyForNextCommand();
 }
 
-void Instance::DolphinInstance_StopRecordingInput(const ToInstanceParams_StopRecordingInput& stopRecordingInputParams)
+void Instance::DolphinInstance_StopRecordingInput(const ToInstanceParams_StopRecordingInput& params)
 {
     StopRecording();
     OnReadyForNextCommand();
 }
 
-void Instance::DolphinInstance_PauseEmulation(const ToInstanceParams_PauseEmulation& pauseEmulationParams)
+void Instance::DolphinInstance_PauseEmulation(const ToInstanceParams_PauseEmulation& params)
 {
     if (Core::GetState() == Core::State::Running)
     {
@@ -335,7 +335,7 @@ void Instance::DolphinInstance_PauseEmulation(const ToInstanceParams_PauseEmulat
     OnReadyForNextCommand();
 }
 
-void Instance::DolphinInstance_ResumeEmulation(const ToInstanceParams_ResumeEmulation& resumeEmulationParams)
+void Instance::DolphinInstance_ResumeEmulation(const ToInstanceParams_ResumeEmulation& params)
 {
     if (Core::GetState() == Core::State::Paused)
     {
@@ -345,10 +345,10 @@ void Instance::DolphinInstance_ResumeEmulation(const ToInstanceParams_ResumeEmul
     OnReadyForNextCommand();
 }
 
-void Instance::DolphinInstance_PlayInputs(const ToInstanceParams_PlayInputs& playInputsParams)
+void Instance::DolphinInstance_PlayInputs(const ToInstanceParams_PlayInputs& params)
 {
     // These vectors can be masive, use std::move to avoid an extra alloc (should be safe since _inputStates is not used after this)
-    _playbackInputs = std::move(playInputsParams._inputStates);
+    _playbackInputs = std::move(params._inputStates);
 
     if (_playbackInputs.size() > 0)
     {
@@ -363,61 +363,84 @@ void Instance::DolphinInstance_PlayInputs(const ToInstanceParams_PlayInputs& pla
     }
 }
 
-void Instance::DolphinInstance_FrameAdvance(const ToInstanceParams_FrameAdvance& frameAdvanceParams)
+void Instance::DolphinInstance_FrameAdvance(const ToInstanceParams_FrameAdvance& params)
 {
-    Core::DoFrameStep();
+    for (int index = 0; index < params._numFrames; index++)
+    {
+        Core::DoFrameStep();
+    }
+
     OnReadyForNextCommand();
 }
 
-void Instance::DolphinInstance_CreateSaveState(const ToInstanceParams_CreateSaveState& createSaveStateParams)
+void Instance::DolphinInstance_CreateSaveState(const ToInstanceParams_CreateSaveState& params)
 {
-    if (!createSaveStateParams._filePath.empty())
+    if (!params._filePath.empty())
     {
-        if (File::Exists(createSaveStateParams._filePath))
+        if (File::Exists(params._filePath))
         {
-            File::Delete(createSaveStateParams._filePath);
+            File::Delete(params._filePath);
         }
 
-        State::SaveAs(createSaveStateParams._filePath, true);
+        State::SaveAs(params._filePath, true);
     }
     
     DolphinIpcToServerData ipcData;
     std::shared_ptr<ToServerParams_OnInstanceSaveStateCreated> data = std::make_shared<ToServerParams_OnInstanceSaveStateCreated>();
-    data->_filePath = createSaveStateParams._filePath;
+    data->_filePath = params._filePath;
     ipcData._call = DolphinServerIpcCall::DolphinServer_OnInstanceSaveStateCreated;
-    ipcData._params._onInstanceSaveStateCreated = data;
+    ipcData._params._paramsOnInstanceSaveStateCreated = data;
     ipcSendToServer(ipcData);
 
     OnReadyForNextCommand();
 }
 
-void Instance::DolphinInstance_CreateMemoryCard(const ToInstanceParams_CreateMemoryCard& createMemoryCardParams)
+void Instance::DolphinInstance_FormatMemoryCard(const ToInstanceParams_FormatMemoryCard& params)
 {
-    if (!createMemoryCardParams._filePath.empty())
+    std::string slotPath;
+    switch(params._slot)
     {
-        if (File::Exists(createMemoryCardParams._filePath))
+        case DolphinSlot::SlotA:
         {
-            File::Delete(createMemoryCardParams._filePath);
+            slotPath = Config::Get(Config::MAIN_MEMCARD_A_PATH);
+            break;
+        }
+        case DolphinSlot::SlotB:
+        {
+            slotPath = Config::Get(Config::MAIN_MEMCARD_A_PATH);
+            break;
+        }
+        default:
+        {
+            return;
+        }
+    }
+    
+    if (!slotPath.empty())
+    {
+        if (File::Exists(slotPath))
+        {
+            File::Delete(slotPath);
         }
 
         u16 size;
-        switch (createMemoryCardParams._cardSize)
+        switch (params._cardSize)
         {
-            case ToInstanceParams_CreateMemoryCard::CardSize::GC_4_Mbit_59_Blocks: size = 4; break;
-            case ToInstanceParams_CreateMemoryCard::CardSize::GC_8_Mbit_123_Blocks: size = 8; break;
-            case ToInstanceParams_CreateMemoryCard::CardSize::GC_16_Mbit_251_Blocks: size = 16; break;
-            case ToInstanceParams_CreateMemoryCard::CardSize::GC_32_Mbit_507_Blocks: size = 32; break;
-            case ToInstanceParams_CreateMemoryCard::CardSize::GC_64_Mbit_1019_Blocks: size = 64; break;
-            default: case ToInstanceParams_CreateMemoryCard::CardSize::GC_128_Mbit_2043_Blocks: size = 128; break;
+            case ToInstanceParams_FormatMemoryCard::CardSize::GC_4_Mbit_59_Blocks: size = 4; break;
+            case ToInstanceParams_FormatMemoryCard::CardSize::GC_8_Mbit_123_Blocks: size = 8; break;
+            case ToInstanceParams_FormatMemoryCard::CardSize::GC_16_Mbit_251_Blocks: size = 16; break;
+            case ToInstanceParams_FormatMemoryCard::CardSize::GC_32_Mbit_507_Blocks: size = 32; break;
+            case ToInstanceParams_FormatMemoryCard::CardSize::GC_64_Mbit_1019_Blocks: size = 64; break;
+            default: case ToInstanceParams_FormatMemoryCard::CardSize::GC_128_Mbit_2043_Blocks: size = 128; break;
         }
-        bool isShiftJis = createMemoryCardParams._encoding == ToInstanceParams_CreateMemoryCard::CardEncoding::Japanese;
+        bool isShiftJis = params._encoding == ToInstanceParams_FormatMemoryCard::CardEncoding::Japanese;
 
         const CardFlashId flash_id{};
         const u32 rtc_bias = 0;
         const u32 sram_language = 0;
         const u64 format_time =  Common::Timer::GetLocalTimeSinceJan1970() - ExpansionInterface::CEXIIPL::GC_EPOCH;
 
-        std::optional<Memcard::GCMemcard> memcard = Memcard::GCMemcard::Create(createMemoryCardParams._filePath, flash_id, size, isShiftJis, rtc_bias, sram_language, format_time);
+        std::optional<Memcard::GCMemcard> memcard = Memcard::GCMemcard::Create(slotPath, flash_id, size, isShiftJis, rtc_bias, sram_language, format_time);
 
         if (memcard)
         {
@@ -427,20 +450,20 @@ void Instance::DolphinInstance_CreateMemoryCard(const ToInstanceParams_CreateMem
 
 
     DolphinIpcToServerData ipcData;
-    std::shared_ptr<ToServerParams_OnInstanceMemoryCardCreated> data = std::make_shared<ToServerParams_OnInstanceMemoryCardCreated>();
-    data->_filePath = createMemoryCardParams._filePath;
-    ipcData._call = DolphinServerIpcCall::DolphinServer_OnInstanceMemoryCardCreated;
-    ipcData._params._onInstanceMemoryCardCreated = data;
+    std::shared_ptr<ToServerParams_OnInstanceMemoryCardFormatted> data = std::make_shared<ToServerParams_OnInstanceMemoryCardFormatted>();
+    data->_slot = params._slot;
+    ipcData._call = DolphinServerIpcCall::DolphinServer_OnInstanceMemoryCardFormatted;
+    ipcData._params._paramsOnInstanceMemoryCardFormatted = data;
     ipcSendToServer(ipcData);
 
     OnReadyForNextCommand();
 }
 
-void Instance::DolphinInstance_LoadSaveState(const ToInstanceParams_LoadSaveState& loadSaveStateParams)
+void Instance::DolphinInstance_LoadSaveState(const ToInstanceParams_LoadSaveState& params)
 {
-    if (File::Exists(loadSaveStateParams._filePath))
+    if (File::Exists(params._filePath))
     {
-        State::LoadAs(loadSaveStateParams._filePath);
+        State::LoadAs(params._filePath);
     }
 
     OnReadyForNextCommand();
@@ -505,7 +528,7 @@ void Instance::StopRecording()
     std::shared_ptr<ToServerParams_OnInstanceRecordingStopped> data = std::make_shared<ToServerParams_OnInstanceRecordingStopped>();
     data->_inputStates = _recordingInputs;
     ipcData._call = DolphinServerIpcCall::DolphinServer_OnInstanceRecordingStopped;
-    ipcData._params._onInstanceRecordingStopped = data;
+    ipcData._params._paramsOnInstanceRecordingStopped = data;
     ipcSendToServer(ipcData);
 
     _recordingInputs.clear();
@@ -516,7 +539,7 @@ void Instance::OnReadyForNextCommand()
     DolphinIpcToServerData ipcData;
     std::shared_ptr<ToServerParams_OnInstanceReady> data = std::make_shared<ToServerParams_OnInstanceReady>();
     ipcData._call = DolphinServerIpcCall::DolphinServer_OnInstanceReady;
-    ipcData._params._onInstanceReadyParams = data;
+    ipcData._params._paramsOnInstanceReady = data;
     ipcSendToServer(ipcData);
 }
 
@@ -531,7 +554,7 @@ void Instance::Log(Common::Log::LogLevel level, const char* text)
     data->_logLevel = logLevel;
     data->_logString = logString;
     ipcData._call = DolphinServerIpcCall::DolphinServer_OnInstanceLogOutput;
-    ipcData._params._onInstanceLogOutput = data;
+    ipcData._params._paramsOnInstanceLogOutput = data;
     ipcSendToServer(ipcData);
 }
 

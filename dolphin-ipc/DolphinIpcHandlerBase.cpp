@@ -127,37 +127,40 @@ void DolphinIpcHandlerBase::updateIpcListen()
     }
 }
 
+#define SERVER_DISPATCH(Name) case DolphinServerIpcCall::DolphinServer_ ## Name: DolphinServer_ ## Name(*data._params._params ## Name); break;
 void DolphinIpcHandlerBase::onInstanceToServerDataReceived(const DolphinIpcToServerData& data)
 {
     switch (data._call)
     {
-        case DolphinServerIpcCall::DolphinServer_OnInstanceConnected: DolphinServer_OnInstanceConnected(*data._params._onInstanceConnectedParams); break;
-        case DolphinServerIpcCall::DolphinServer_OnInstanceReady: DolphinServer_OnInstanceReady(*data._params._onInstanceReadyParams); break;
-        case DolphinServerIpcCall::DolphinServer_OnInstanceLogOutput: DolphinServer_OnInstanceLogOutput(*data._params._onInstanceLogOutput); break;
-        case DolphinServerIpcCall::DolphinServer_OnInstanceHeartbeatAcknowledged: DolphinServer_OnInstanceHeartbeatAcknowledged(*data._params._onInstanceHeartbeatAcknowledged); break;
-        case DolphinServerIpcCall::DolphinServer_OnInstanceTerminated: DolphinServer_OnInstanceTerminated(*data._params._onInstanceTerminatedParams); break;
-        case DolphinServerIpcCall::DolphinServer_OnInstanceRecordingStopped: DolphinServer_OnInstanceRecordingStopped(*data._params._onInstanceRecordingStopped); break;
-        case DolphinServerIpcCall::DolphinServer_OnInstanceSaveStateCreated: DolphinServer_OnInstanceSaveStateCreated(*data._params._onInstanceSaveStateCreated); break;
+        SERVER_DISPATCH(OnInstanceConnected)
+        SERVER_DISPATCH(OnInstanceReady)
+        SERVER_DISPATCH(OnInstanceHeartbeatAcknowledged)
+        SERVER_DISPATCH(OnInstanceLogOutput)
+        SERVER_DISPATCH(OnInstanceTerminated)
+        SERVER_DISPATCH(OnInstanceRecordingStopped)
+        SERVER_DISPATCH(OnInstanceSaveStateCreated)
+        SERVER_DISPATCH(OnInstanceMemoryCardFormatted)
         case DolphinServerIpcCall::Null: default: std::cout << "NULL instance => server call!" << std::endl; break;
     }
 }
 
+#define INSTANCE_DISPATCH(Name) case DolphinInstanceIpcCall::DolphinInstance_ ## Name: DolphinInstance_ ## Name(*data._params._params ## Name); break;
 void DolphinIpcHandlerBase::onServerToInstanceDataReceived(const DolphinIpcToInstanceData& data)
 {
     switch (data._call)
     {
-        case DolphinInstanceIpcCall::DolphinInstance_Connect: DolphinInstance_Connect(*data._params._connectParams); break;
-        case DolphinInstanceIpcCall::DolphinInstance_Heartbeat: DolphinInstance_Heartbeat(*data._params._heartbeatParams); break;
-        case DolphinInstanceIpcCall::DolphinInstance_Terminate: DolphinInstance_Terminate(*data._params._terminateParams); break;
-        case DolphinInstanceIpcCall::DolphinInstance_StartRecordingInput: DolphinInstance_StartRecordingInput(*data._params._startRecordingInputParams); break;
-        case DolphinInstanceIpcCall::DolphinInstance_StopRecordingInput: DolphinInstance_StopRecordingInput(*data._params._stopRecordingInputParams); break;
-        case DolphinInstanceIpcCall::DolphinInstance_PauseEmulation: DolphinInstance_PauseEmulation(*data._params._pauseEmulationParams); break;
-        case DolphinInstanceIpcCall::DolphinInstance_ResumeEmulation: DolphinInstance_ResumeEmulation(*data._params._resumeEmulationParams); break;
-        case DolphinInstanceIpcCall::DolphinInstance_PlayInputs: DolphinInstance_PlayInputs(*data._params._playInputsParams); break;
-        case DolphinInstanceIpcCall::DolphinInstance_FrameAdvance: DolphinInstance_FrameAdvance(*data._params._frameAdvanceParams); break;
-        case DolphinInstanceIpcCall::DolphinInstance_CreateSaveState: DolphinInstance_CreateSaveState(*data._params._createSaveStateParams); break;
-        case DolphinInstanceIpcCall::DolphinInstance_LoadSaveState: DolphinInstance_LoadSaveState(*data._params._loadSaveStateParams); break;
-        case DolphinInstanceIpcCall::DolphinInstance_CreateMemoryCard: DolphinInstance_CreateMemoryCard(*data._params._createMemoryCardParams); break;
+        INSTANCE_DISPATCH(Connect)
+        INSTANCE_DISPATCH(Heartbeat)
+        INSTANCE_DISPATCH(Terminate)
+        INSTANCE_DISPATCH(StartRecordingInput)
+        INSTANCE_DISPATCH(StopRecordingInput)
+        INSTANCE_DISPATCH(PauseEmulation)
+        INSTANCE_DISPATCH(ResumeEmulation)
+        INSTANCE_DISPATCH(PlayInputs)
+        INSTANCE_DISPATCH(FrameAdvance)
+        INSTANCE_DISPATCH(CreateSaveState)
+        INSTANCE_DISPATCH(LoadSaveState)
+        INSTANCE_DISPATCH(FormatMemoryCard)
         case DolphinInstanceIpcCall::Null: default: std::cout << "NULL server => instance call!" << std::endl; break;
     }
 }

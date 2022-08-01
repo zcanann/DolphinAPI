@@ -21,7 +21,8 @@ enum class DolphinInstanceIpcCall
 	DolphinInstance_FrameAdvance,
 	DolphinInstance_CreateSaveState,
 	DolphinInstance_LoadSaveState,
-	DolphinInstance_CreateMemoryCard,
+	DolphinInstance_FormatMemoryCard,
+	DolphinInstance_ImportGci,
 };
 
 struct ToInstanceParams_Connect
@@ -127,17 +128,7 @@ struct ToInstanceParams_LoadSaveState
 	}
 };
 
-/*
-
-  m_combobox_size->addItem(tr("4 Mbit (59 blocks)"), 4);
-  m_combobox_size->addItem(tr("8 Mbit (123 blocks)"), 8);
-  m_combobox_size->addItem(tr("16 Mbit (251 blocks)"), 16);
-  m_combobox_size->addItem(tr("32 Mbit (507 blocks)"), 32);
-  m_combobox_size->addItem(tr("64 Mbit (1019 blocks)"), 64);
-  m_combobox_size->addItem(tr("128 Mbit (2043 blocks)"), 128);
-*/
-
-struct ToInstanceParams_CreateMemoryCard
+struct ToInstanceParams_FormatMemoryCard
 {
 	enum class CardSize
 	{
@@ -156,33 +147,44 @@ struct ToInstanceParams_CreateMemoryCard
 
 	CardSize _cardSize = CardSize::GC_128_Mbit_2043_Blocks;
 	CardEncoding _encoding = CardEncoding::Western;
-	std::string _filePath;
+	DolphinSlot _slot = DolphinSlot::SlotA;
 
 	template <class Archive>
 	void serialize(Archive& ar)
 	{
-		ar(_filePath);
+		ar(_cardSize);
+		ar(_encoding);
+		ar(_slot);
 	}
 };
 
+#define TO_INSTANCE_MEMBER(Name) std::shared_ptr<ToInstanceParams_##Name> _params ## Name;
 union DolphinIpcToInstanceDataParams
 {
-	DolphinIpcToInstanceDataParams() : _connectParams({}) { }
+	DolphinIpcToInstanceDataParams() : _paramsConnect({}) { }
 	~DolphinIpcToInstanceDataParams() {}
 
-	std::shared_ptr<ToInstanceParams_Connect> _connectParams;
-	std::shared_ptr<ToInstanceParams_Heartbeat> _heartbeatParams;
-	std::shared_ptr<ToInstanceParams_Terminate> _terminateParams;
-	std::shared_ptr<ToInstanceParams_StartRecordingInput> _startRecordingInputParams;
-	std::shared_ptr<ToInstanceParams_StopRecordingInput> _stopRecordingInputParams;
-	std::shared_ptr<ToInstanceParams_PauseEmulation> _pauseEmulationParams;
-	std::shared_ptr<ToInstanceParams_ResumeEmulation> _resumeEmulationParams;
-	std::shared_ptr<ToInstanceParams_PlayInputs> _playInputsParams;
-	std::shared_ptr<ToInstanceParams_FrameAdvance> _frameAdvanceParams;
-	std::shared_ptr<ToInstanceParams_CreateSaveState> _createSaveStateParams;
-	std::shared_ptr<ToInstanceParams_LoadSaveState> _loadSaveStateParams;
-	std::shared_ptr<ToInstanceParams_CreateMemoryCard> _createMemoryCardParams;
+	TO_INSTANCE_MEMBER(Connect)
+	TO_INSTANCE_MEMBER(Heartbeat)
+	TO_INSTANCE_MEMBER(Terminate)
+	TO_INSTANCE_MEMBER(StartRecordingInput)
+	TO_INSTANCE_MEMBER(StopRecordingInput)
+	TO_INSTANCE_MEMBER(PauseEmulation)
+	TO_INSTANCE_MEMBER(ResumeEmulation)
+	TO_INSTANCE_MEMBER(PlayInputs)
+	TO_INSTANCE_MEMBER(FrameAdvance)
+	TO_INSTANCE_MEMBER(CreateSaveState)
+	TO_INSTANCE_MEMBER(LoadSaveState)
+	TO_INSTANCE_MEMBER(FormatMemoryCard)
 };
+
+#define TO_INSTANCE_ARCHIVE(Name) case DolphinInstanceIpcCall::DolphinInstance_ ## Name: \
+	{ \
+		if (!_params._params ## Name) \
+		_params._params ## Name = std::make_shared<ToInstanceParams_##Name>(); \
+		ar(*(_params._params ## Name)); \
+		break; \
+	}
 
 struct DolphinIpcToInstanceData
 {
@@ -196,115 +198,18 @@ struct DolphinIpcToInstanceData
 
 		switch (_call)
 		{
-			case DolphinInstanceIpcCall::DolphinInstance_Connect:
-			{
-				if (!_params._connectParams)
-				{
-					_params._connectParams = std::make_shared<ToInstanceParams_Connect>();
-				}
-				ar(*(_params._connectParams));
-				break;
-			}
-			case DolphinInstanceIpcCall::DolphinInstance_Heartbeat:
-			{
-				if (!_params._heartbeatParams)
-				{
-					_params._heartbeatParams = std::make_shared<ToInstanceParams_Heartbeat>();
-				}
-				ar(*(_params._heartbeatParams));
-				break;
-			}
-			case DolphinInstanceIpcCall::DolphinInstance_Terminate:
-			{
-				if (!_params._terminateParams)
-				{
-					_params._terminateParams = std::make_shared<ToInstanceParams_Terminate>();
-				}
-				ar(*(_params._terminateParams));
-				break;
-			}
-			case DolphinInstanceIpcCall::DolphinInstance_StartRecordingInput:
-			{
-				if (!_params._startRecordingInputParams)
-				{
-					_params._startRecordingInputParams = std::make_shared<ToInstanceParams_StartRecordingInput>();
-				}
-				ar(*(_params._startRecordingInputParams));
-				break;
-			}
-			case DolphinInstanceIpcCall::DolphinInstance_StopRecordingInput:
-			{
-				if (!_params._stopRecordingInputParams)
-				{
-					_params._stopRecordingInputParams = std::make_shared<ToInstanceParams_StopRecordingInput>();
-				}
-				ar(*(_params._stopRecordingInputParams));
-				break;
-			}
-			case DolphinInstanceIpcCall::DolphinInstance_PauseEmulation:
-			{
-				if (!_params._pauseEmulationParams)
-				{
-					_params._pauseEmulationParams = std::make_shared<ToInstanceParams_PauseEmulation>();
-				}
-				ar(*(_params._pauseEmulationParams));
-				break;
-			}
-			case DolphinInstanceIpcCall::DolphinInstance_ResumeEmulation:
-			{
-				if (!_params._resumeEmulationParams)
-				{
-					_params._resumeEmulationParams = std::make_shared<ToInstanceParams_ResumeEmulation>();
-				}
-				ar(*(_params._resumeEmulationParams));
-				break;
-			}
-			case DolphinInstanceIpcCall::DolphinInstance_PlayInputs:
-			{
-				if (!_params._playInputsParams)
-				{
-					_params._playInputsParams = std::make_shared<ToInstanceParams_PlayInputs>();
-				}
-				ar(*(_params._playInputsParams));
-				break;
-			}
-			case DolphinInstanceIpcCall::DolphinInstance_FrameAdvance:
-			{
-				if (!_params._frameAdvanceParams)
-				{
-					_params._frameAdvanceParams = std::make_shared<ToInstanceParams_FrameAdvance>();
-				}
-				ar(*(_params._frameAdvanceParams));
-				break;
-			}
-			case DolphinInstanceIpcCall::DolphinInstance_CreateSaveState:
-			{
-				if (!_params._createSaveStateParams)
-				{
-					_params._createSaveStateParams = std::make_shared<ToInstanceParams_CreateSaveState>();
-				}
-				ar(*(_params._createSaveStateParams));
-				break;
-			}
-			case DolphinInstanceIpcCall::DolphinInstance_LoadSaveState:
-			{
-				if (!_params._loadSaveStateParams)
-				{
-					_params._loadSaveStateParams = std::make_shared<ToInstanceParams_LoadSaveState>();
-				}
-				ar(*(_params._loadSaveStateParams));
-				break;
-			}
-			case DolphinInstanceIpcCall::DolphinInstance_CreateMemoryCard:
-			{
-				if (!_params._createMemoryCardParams)
-				{
-					_params._createMemoryCardParams = std::make_shared<ToInstanceParams_CreateMemoryCard>();
-				}
-				ar(*(_params._createMemoryCardParams));
-				break;
-			}
-			case DolphinInstanceIpcCall::Null: default: break;
+			TO_INSTANCE_ARCHIVE(Connect)
+			TO_INSTANCE_ARCHIVE(Heartbeat)
+			TO_INSTANCE_ARCHIVE(Terminate)
+			TO_INSTANCE_ARCHIVE(StartRecordingInput)
+			TO_INSTANCE_ARCHIVE(StopRecordingInput)
+			TO_INSTANCE_ARCHIVE(PauseEmulation)
+			TO_INSTANCE_ARCHIVE(ResumeEmulation)
+			TO_INSTANCE_ARCHIVE(PlayInputs)
+			TO_INSTANCE_ARCHIVE(FrameAdvance)
+			TO_INSTANCE_ARCHIVE(CreateSaveState)
+			TO_INSTANCE_ARCHIVE(LoadSaveState)
+			TO_INSTANCE_ARCHIVE(FormatMemoryCard)
 		}
 	}
 };
