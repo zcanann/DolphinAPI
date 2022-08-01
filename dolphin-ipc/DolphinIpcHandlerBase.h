@@ -51,6 +51,7 @@ protected:
 	virtual void DolphinServer_OnInstanceConnected(const ToServerParams_OnInstanceConnected& onInstanceConnectedParams) { NOT_IMPLEMENTED(); }
 	virtual void DolphinServer_OnInstanceReady(const ToServerParams_OnInstanceReady& onInstanceReadyParams) { NOT_IMPLEMENTED(); }
 	virtual void DolphinServer_OnInstanceHeartbeatAcknowledged(const ToServerParams_OnInstanceHeartbeatAcknowledged& onInstanceHeartbeatAcknowledgedParams) { NOT_IMPLEMENTED(); }
+	virtual void DolphinServer_OnInstanceLogOutput(const ToServerParams_OnInstanceLogOutput& onInstanceLogOutputParams) { NOT_IMPLEMENTED(); }
 	virtual void DolphinServer_OnInstanceTerminated(const ToServerParams_OnInstanceTerminated& onInstanceTerminatedParams) { NOT_IMPLEMENTED(); }
 	virtual void DolphinServer_OnInstanceRecordingStopped(const ToServerParams_OnInstanceRecordingStopped& onInstanceRecordingStopped) { NOT_IMPLEMENTED(); }
 	virtual void DolphinServer_OnInstanceSaveStateCreated(const ToServerParams_OnInstanceSaveStateCreated& onInstanceSaveStateCreated) { NOT_IMPLEMENTED(); }

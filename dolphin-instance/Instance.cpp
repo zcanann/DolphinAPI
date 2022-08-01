@@ -38,6 +38,8 @@ Instance::Instance(const InstanceBootParameters& bootParams)
 {
     initializeChannels(bootParams.instanceId, true);
     InitializeLaunchOptions(bootParams);
+
+    Common::Log::LogManager::GetInstance()->RegisterListener(Common::Log::LogListener::LOG_WINDOW_LISTENER, this);
 }
 
 Instance::~Instance()
@@ -461,6 +463,21 @@ void Instance::OnReadyForNextCommand()
     std::shared_ptr<ToServerParams_OnInstanceReady> data = std::make_shared<ToServerParams_OnInstanceReady>();
     ipcData._call = DolphinServerIpcCall::DolphinServer_OnInstanceReady;
     ipcData._params._onInstanceReadyParams = data;
+    ipcSendToServer(ipcData);
+}
+
+void Instance::Log(Common::Log::LogLevel level, const char* text)
+{
+    // Intentionally using the same enum values so we can cast like this
+    ToServerParams_OnInstanceLogOutput::LogLevel logLevel = (ToServerParams_OnInstanceLogOutput::LogLevel)level;
+    std::string logString = std::string(text);
+
+    DolphinIpcToServerData ipcData;
+    std::shared_ptr<ToServerParams_OnInstanceLogOutput> data = std::make_shared<ToServerParams_OnInstanceLogOutput>();
+    data->_logLevel = logLevel;
+    data->_logString = logString;
+    ipcData._call = DolphinServerIpcCall::DolphinServer_OnInstanceLogOutput;
+    ipcData._params._onInstanceLogOutput = data;
     ipcSendToServer(ipcData);
 }
 

@@ -30,6 +30,11 @@ void MockServer::DolphinServer_OnInstanceHeartbeatAcknowledged(const ToServerPar
 {
 }
 
+void MockServer::DolphinServer_OnInstanceLogOutput(const ToServerParams_OnInstanceLogOutput& onInstanceLogOutputParams)
+{
+    std::cout << "[LOG] " << onInstanceLogOutputParams._logString << std::endl;
+}
+
 void MockServer::DolphinServer_OnInstanceTerminated(const ToServerParams_OnInstanceTerminated& OnInstanceTerminatedParams)
 {
     std::cout << "recieved instance terminated" << std::endl;

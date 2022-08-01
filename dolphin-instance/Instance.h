@@ -7,6 +7,7 @@
 #include "dolphin-ipc/IpcStructs.h"
 
 #include "Common/Flag.h"
+#include "Common/Logging/LogManager.h"
 #include "Common/WindowSystemInfo.h"
 #include "Core/Movie.h"
 
@@ -24,7 +25,7 @@ struct InstanceBootParameters
 	bool pauseOnBoot = true;
 };
 
-class Instance : public DolphinIpcHandlerBase
+class Instance : public DolphinIpcHandlerBase, Common::Log::LogListener
 {
 public:
 	Instance(const InstanceBootParameters& bootParams);
@@ -81,6 +82,7 @@ protected:
 	void StartRecording();
 	void StopRecording();
 	void OnReadyForNextCommand();
+	void Log(Common::Log::LogLevel level, const char* text) override;
 
 	Common::Flag _running{true};
 	Common::Flag _shutdown_requested{false};

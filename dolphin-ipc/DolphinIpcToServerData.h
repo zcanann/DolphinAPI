@@ -13,6 +13,7 @@ enum class DolphinServerIpcCall
 	DolphinServer_OnInstanceConnected,
 	DolphinServer_OnInstanceReady,
 	DolphinServer_OnInstanceHeartbeatAcknowledged,
+	DolphinServer_OnInstanceLogOutput,
 	DolphinServer_OnInstanceTerminated,
 	DolphinServer_OnInstanceRecordingStopped,
 	DolphinServer_OnInstanceSaveStateCreated,
@@ -44,6 +45,28 @@ struct ToServerParams_OnInstanceHeartbeatAcknowledged
 	{
 		ar(_isRecording);
 		ar(_isPaused);
+	}
+};
+
+struct ToServerParams_OnInstanceLogOutput
+{
+	enum class LogLevel
+	{
+		Notice = 1,
+		Error = 2,
+		Warning = 3,
+		Info = 4,
+		Debug = 5,
+	};
+
+	LogLevel _logLevel;
+	std::string _logString;
+
+	template <class Archive>
+	void serialize(Archive& ar)
+	{
+		ar(_logLevel);
+		ar(_logString);
 	}
 };
 
@@ -85,6 +108,7 @@ union DolphinIpcToServerDataParams
 	std::shared_ptr<ToServerParams_OnInstanceConnected> _onInstanceConnectedParams;
 	std::shared_ptr<ToServerParams_OnInstanceReady> _onInstanceReadyParams;
 	std::shared_ptr<ToServerParams_OnInstanceHeartbeatAcknowledged> _onInstanceHeartbeatAcknowledged;
+	std::shared_ptr<ToServerParams_OnInstanceLogOutput> _onInstanceLogOutput;
 	std::shared_ptr<ToServerParams_OnInstanceTerminated> _onInstanceTerminatedParams;
 	std::shared_ptr<ToServerParams_OnInstanceRecordingStopped> _onInstanceRecordingStopped;
 	std::shared_ptr<ToServerParams_OnInstanceSaveStateCreated> _onInstanceSaveStateCreated;
@@ -127,6 +151,15 @@ struct DolphinIpcToServerData
 					_params._onInstanceHeartbeatAcknowledged = std::make_shared<ToServerParams_OnInstanceHeartbeatAcknowledged>();
 				}
 				ar(*(_params._onInstanceHeartbeatAcknowledged));
+				break;
+			}
+			case DolphinServerIpcCall::DolphinServer_OnInstanceLogOutput:
+			{
+				if (!_params._onInstanceLogOutput)
+				{
+					_params._onInstanceLogOutput = std::make_shared<ToServerParams_OnInstanceLogOutput>();
+				}
+				ar(*(_params._onInstanceLogOutput));
 				break;
 			}
 			case DolphinServerIpcCall::DolphinServer_OnInstanceTerminated:
