@@ -388,6 +388,7 @@ INSTANCE_FUNC_BODY(Instance, CreateSaveState, params)
     DolphinIpcToServerData ipcData;
     std::shared_ptr<ToServerParams_OnInstanceSaveStateCreated> data = std::make_shared<ToServerParams_OnInstanceSaveStateCreated>();
     data->_filePath = params._filePath;
+    data->_recordingInputs = _recordingInputs;
     ipcData._call = DolphinServerIpcCall::DolphinServer_OnInstanceSaveStateCreated;
     ipcData._params._paramsOnInstanceSaveStateCreated = data;
     ipcSendToServer(ipcData);

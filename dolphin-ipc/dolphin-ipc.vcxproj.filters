@@ -277,6 +277,7 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="external\cereal\external\rapidxml\manual.html" />
+    <None Include="cpp.hint" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="DolphinIpcHandlerBase.cpp" />

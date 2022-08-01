@@ -252,6 +252,7 @@
     <ClCompile Include="DolphinIpcHandlerBase.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="cpp.hint" />
     <None Include="external\cereal\external\rapidxml\manual.html" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
