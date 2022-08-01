@@ -3,6 +3,7 @@
 
 #include "Instance.h"
 
+#include "InstanceConfigLoader.h"
 #include "MockServer.h"
 #include "TemplateHelpers.h"
 
@@ -18,11 +19,14 @@
 #include "Core/IOS/STM/STM.h"
 #include "Core/State.h"
 #include "Core/HW/DVD/DVDInterface.h"
+#include "Core/HW/EXI/EXI_DeviceIPL.h"
 #include "Core/HW/GBAPad.h"
 #include "Core/HW/GCKeyboard.h"
+#include "Core/HW/GCMemcard/GCMemcard.h"
 #include "Core/HW/GCPad.h"
 #include "Core/HW/ProcessorInterface.h"
 #include "Core/HW/SI/SI_Device.h"
+#include "Core/HW/Sram.h"
 #include "Core/HW/VideoInterface.h"
 #include "Core/HW/Wiimote.h"
 #include "Core/HW/WiimoteEmu/WiimoteEmu.h"
@@ -60,6 +64,11 @@ void Instance::InitializeLaunchOptions(const InstanceBootParameters& bootParams)
         {
             _recordingInputs.push_back(DolphinControllerState());
         }
+    }
+    else
+    {
+        // Overwrite certain configs for non-mock sessions
+        Config::AddLayer(GenerateInstanceConfigLoader());
     }
 
     if (recordOnLaunch)
@@ -377,6 +386,51 @@ void Instance::DolphinInstance_CreateSaveState(const ToInstanceParams_CreateSave
     data->_filePath = createSaveStateParams._filePath;
     ipcData._call = DolphinServerIpcCall::DolphinServer_OnInstanceSaveStateCreated;
     ipcData._params._onInstanceSaveStateCreated = data;
+    ipcSendToServer(ipcData);
+
+    OnReadyForNextCommand();
+}
+
+void Instance::DolphinInstance_CreateMemoryCard(const ToInstanceParams_CreateMemoryCard& createMemoryCardParams)
+{
+    if (!createMemoryCardParams._filePath.empty())
+    {
+        if (File::Exists(createMemoryCardParams._filePath))
+        {
+            File::Delete(createMemoryCardParams._filePath);
+        }
+
+        u16 size;
+        switch (createMemoryCardParams._cardSize)
+        {
+            case ToInstanceParams_CreateMemoryCard::CardSize::GC_4_Mbit_59_Blocks: size = 4; break;
+            case ToInstanceParams_CreateMemoryCard::CardSize::GC_8_Mbit_123_Blocks: size = 8; break;
+            case ToInstanceParams_CreateMemoryCard::CardSize::GC_16_Mbit_251_Blocks: size = 16; break;
+            case ToInstanceParams_CreateMemoryCard::CardSize::GC_32_Mbit_507_Blocks: size = 32; break;
+            case ToInstanceParams_CreateMemoryCard::CardSize::GC_64_Mbit_1019_Blocks: size = 64; break;
+            default: case ToInstanceParams_CreateMemoryCard::CardSize::GC_128_Mbit_2043_Blocks: size = 128; break;
+        }
+        bool isShiftJis = createMemoryCardParams._encoding == ToInstanceParams_CreateMemoryCard::CardEncoding::Japanese;
+
+        const CardFlashId flash_id{};
+        const u32 rtc_bias = 0;
+        const u32 sram_language = 0;
+        const u64 format_time =  Common::Timer::GetLocalTimeSinceJan1970() - ExpansionInterface::CEXIIPL::GC_EPOCH;
+
+        std::optional<Memcard::GCMemcard> memcard = Memcard::GCMemcard::Create(createMemoryCardParams._filePath, flash_id, size, isShiftJis, rtc_bias, sram_language, format_time);
+
+        if (memcard)
+        {
+            memcard->Save();
+        }
+    }
+
+
+    DolphinIpcToServerData ipcData;
+    std::shared_ptr<ToServerParams_OnInstanceMemoryCardCreated> data = std::make_shared<ToServerParams_OnInstanceMemoryCardCreated>();
+    data->_filePath = createMemoryCardParams._filePath;
+    ipcData._call = DolphinServerIpcCall::DolphinServer_OnInstanceMemoryCardCreated;
+    ipcData._params._onInstanceMemoryCardCreated = data;
     ipcSendToServer(ipcData);
 
     OnReadyForNextCommand();

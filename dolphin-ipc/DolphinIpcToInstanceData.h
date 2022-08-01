@@ -21,6 +21,7 @@ enum class DolphinInstanceIpcCall
 	DolphinInstance_FrameAdvance,
 	DolphinInstance_CreateSaveState,
 	DolphinInstance_LoadSaveState,
+	DolphinInstance_CreateMemoryCard,
 };
 
 struct ToInstanceParams_Connect
@@ -126,6 +127,44 @@ struct ToInstanceParams_LoadSaveState
 	}
 };
 
+/*
+
+  m_combobox_size->addItem(tr("4 Mbit (59 blocks)"), 4);
+  m_combobox_size->addItem(tr("8 Mbit (123 blocks)"), 8);
+  m_combobox_size->addItem(tr("16 Mbit (251 blocks)"), 16);
+  m_combobox_size->addItem(tr("32 Mbit (507 blocks)"), 32);
+  m_combobox_size->addItem(tr("64 Mbit (1019 blocks)"), 64);
+  m_combobox_size->addItem(tr("128 Mbit (2043 blocks)"), 128);
+*/
+
+struct ToInstanceParams_CreateMemoryCard
+{
+	enum class CardSize
+	{
+		GC_4_Mbit_59_Blocks,
+		GC_8_Mbit_123_Blocks,
+		GC_16_Mbit_251_Blocks,
+		GC_32_Mbit_507_Blocks,
+		GC_64_Mbit_1019_Blocks,
+		GC_128_Mbit_2043_Blocks,
+	};
+	enum class CardEncoding
+	{
+		Western,
+		Japanese,
+	};
+
+	CardSize _cardSize = CardSize::GC_128_Mbit_2043_Blocks;
+	CardEncoding _encoding = CardEncoding::Western;
+	std::string _filePath;
+
+	template <class Archive>
+	void serialize(Archive& ar)
+	{
+		ar(_filePath);
+	}
+};
+
 union DolphinIpcToInstanceDataParams
 {
 	DolphinIpcToInstanceDataParams() : _connectParams({}) { }
@@ -142,6 +181,7 @@ union DolphinIpcToInstanceDataParams
 	std::shared_ptr<ToInstanceParams_FrameAdvance> _frameAdvanceParams;
 	std::shared_ptr<ToInstanceParams_CreateSaveState> _createSaveStateParams;
 	std::shared_ptr<ToInstanceParams_LoadSaveState> _loadSaveStateParams;
+	std::shared_ptr<ToInstanceParams_CreateMemoryCard> _createMemoryCardParams;
 };
 
 struct DolphinIpcToInstanceData
@@ -253,6 +293,15 @@ struct DolphinIpcToInstanceData
 					_params._loadSaveStateParams = std::make_shared<ToInstanceParams_LoadSaveState>();
 				}
 				ar(*(_params._loadSaveStateParams));
+				break;
+			}
+			case DolphinInstanceIpcCall::DolphinInstance_CreateMemoryCard:
+			{
+				if (!_params._createMemoryCardParams)
+				{
+					_params._createMemoryCardParams = std::make_shared<ToInstanceParams_CreateMemoryCard>();
+				}
+				ar(*(_params._createMemoryCardParams));
 				break;
 			}
 			case DolphinInstanceIpcCall::Null: default: break;

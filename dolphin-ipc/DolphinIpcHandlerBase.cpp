@@ -157,6 +157,7 @@ void DolphinIpcHandlerBase::onServerToInstanceDataReceived(const DolphinIpcToIns
         case DolphinInstanceIpcCall::DolphinInstance_FrameAdvance: DolphinInstance_FrameAdvance(*data._params._frameAdvanceParams); break;
         case DolphinInstanceIpcCall::DolphinInstance_CreateSaveState: DolphinInstance_CreateSaveState(*data._params._createSaveStateParams); break;
         case DolphinInstanceIpcCall::DolphinInstance_LoadSaveState: DolphinInstance_LoadSaveState(*data._params._loadSaveStateParams); break;
+        case DolphinInstanceIpcCall::DolphinInstance_CreateMemoryCard: DolphinInstance_CreateMemoryCard(*data._params._createMemoryCardParams); break;
         case DolphinInstanceIpcCall::Null: default: std::cout << "NULL server => instance call!" << std::endl; break;
     }
 }

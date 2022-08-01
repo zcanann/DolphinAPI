@@ -6,11 +6,13 @@
     <ClCompile Include="MainNoGUI.cpp" />
     <ClCompile Include="InstanceWin32.cpp" />
     <ClCompile Include="MockServer.cpp" />
+    <ClCompile Include="InstanceConfigLoader.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Instance.h" />
     <ClInclude Include="MockServer.h" />
     <ClInclude Include="TemplateHelpers.h" />
+    <ClInclude Include="InstanceConfigLoader.h" />
   </ItemGroup>
   <ItemGroup>
     <Manifest Include="DolphinInstance.exe.manifest" />

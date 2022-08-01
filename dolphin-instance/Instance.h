@@ -77,6 +77,7 @@ protected:
 	virtual void DolphinInstance_FrameAdvance(const ToInstanceParams_FrameAdvance& frameAdvanceParams) override;
 	virtual void DolphinInstance_CreateSaveState(const ToInstanceParams_CreateSaveState& createSaveStateParams) override;
 	virtual void DolphinInstance_LoadSaveState(const ToInstanceParams_LoadSaveState& loadSaveStateParams) override;
+	virtual void DolphinInstance_CreateMemoryCard(const ToInstanceParams_CreateMemoryCard& createMemoryCardParams) override;
 
 	void UpdateRunningFlag();
 	void StartRecording();

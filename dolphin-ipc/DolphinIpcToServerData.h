@@ -17,6 +17,7 @@ enum class DolphinServerIpcCall
 	DolphinServer_OnInstanceTerminated,
 	DolphinServer_OnInstanceRecordingStopped,
 	DolphinServer_OnInstanceSaveStateCreated,
+	DolphinServer_OnInstanceMemoryCardCreated,
 };
 
 struct ToServerParams_OnInstanceConnected
@@ -100,6 +101,17 @@ struct ToServerParams_OnInstanceSaveStateCreated
 	}
 };
 
+struct ToServerParams_OnInstanceMemoryCardCreated
+{
+	std::string _filePath;
+
+	template <class Archive>
+	void serialize(Archive& ar)
+	{
+		ar(_filePath);
+	}
+};
+
 union DolphinIpcToServerDataParams
 {
 	DolphinIpcToServerDataParams() : _onInstanceConnectedParams({}) { }
@@ -112,6 +124,7 @@ union DolphinIpcToServerDataParams
 	std::shared_ptr<ToServerParams_OnInstanceTerminated> _onInstanceTerminatedParams;
 	std::shared_ptr<ToServerParams_OnInstanceRecordingStopped> _onInstanceRecordingStopped;
 	std::shared_ptr<ToServerParams_OnInstanceSaveStateCreated> _onInstanceSaveStateCreated;
+	std::shared_ptr<ToServerParams_OnInstanceMemoryCardCreated> _onInstanceMemoryCardCreated;
 };
 
 struct DolphinIpcToServerData
@@ -187,6 +200,15 @@ struct DolphinIpcToServerData
 					_params._onInstanceSaveStateCreated = std::make_shared<ToServerParams_OnInstanceSaveStateCreated>();
 				}
 				ar(*(_params._onInstanceSaveStateCreated));
+				break;
+			}
+			case DolphinServerIpcCall::DolphinServer_OnInstanceMemoryCardCreated:
+			{
+				if (!_params._onInstanceMemoryCardCreated)
+				{
+					_params._onInstanceMemoryCardCreated = std::make_shared<ToServerParams_OnInstanceMemoryCardCreated>();
+				}
+				ar(*(_params._onInstanceMemoryCardCreated));
 				break;
 			}
 			case DolphinServerIpcCall::Null: default: break;

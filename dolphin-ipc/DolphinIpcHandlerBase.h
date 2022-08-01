@@ -45,6 +45,7 @@ protected:
 	virtual void DolphinInstance_FrameAdvance(const ToInstanceParams_FrameAdvance& frameAdvanceParams) { NOT_IMPLEMENTED(); }
 	virtual void DolphinInstance_CreateSaveState(const ToInstanceParams_CreateSaveState& createSaveStateParams) { NOT_IMPLEMENTED(); }
 	virtual void DolphinInstance_LoadSaveState(const ToInstanceParams_LoadSaveState& loadSaveStateParams) { NOT_IMPLEMENTED(); }
+	virtual void DolphinInstance_CreateMemoryCard(const ToInstanceParams_CreateMemoryCard& createMemoryCardParams) { NOT_IMPLEMENTED(); }
 
 	// Server implemented functions
 protected:
