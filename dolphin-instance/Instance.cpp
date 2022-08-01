@@ -288,11 +288,11 @@ void Instance::PrepareForTASInput()
     // Movie::BeginRecordingInput(controllers, wiimotes);*/
 }
 
-void Instance::DolphinInstance_Connect(const ToInstanceParams_Connect& params)
+INSTANCE_FUNC_BODY(Instance, Connect, params)
 {
 }
 
-void Instance::DolphinInstance_Heartbeat(const ToInstanceParams_Heartbeat& params)
+INSTANCE_FUNC_BODY(Instance, Heartbeat, params)
 {
     _lastHeartbeat = std::chrono::system_clock::now();
 
@@ -306,26 +306,26 @@ void Instance::DolphinInstance_Heartbeat(const ToInstanceParams_Heartbeat& param
     ipcSendToServer(ipcData);
 }
 
-void Instance::DolphinInstance_Terminate(const ToInstanceParams_Terminate& params)
+INSTANCE_FUNC_BODY(Instance, Terminate, params)
 {
     StopRecording();
     RequestShutdown();
 }
 
-void Instance::DolphinInstance_StartRecordingInput(const ToInstanceParams_StartRecordingInput& params)
+INSTANCE_FUNC_BODY(Instance, StartRecordingInput, params)
 {
     StopRecording();
     StartRecording();
     OnReadyForNextCommand();
 }
 
-void Instance::DolphinInstance_StopRecordingInput(const ToInstanceParams_StopRecordingInput& params)
+INSTANCE_FUNC_BODY(Instance, StopRecordingInput, params)
 {
     StopRecording();
     OnReadyForNextCommand();
 }
 
-void Instance::DolphinInstance_PauseEmulation(const ToInstanceParams_PauseEmulation& params)
+INSTANCE_FUNC_BODY(Instance, PauseEmulation, params)
 {
     if (Core::GetState() == Core::State::Running)
     {
@@ -335,7 +335,7 @@ void Instance::DolphinInstance_PauseEmulation(const ToInstanceParams_PauseEmulat
     OnReadyForNextCommand();
 }
 
-void Instance::DolphinInstance_ResumeEmulation(const ToInstanceParams_ResumeEmulation& params)
+INSTANCE_FUNC_BODY(Instance, ResumeEmulation, params)
 {
     if (Core::GetState() == Core::State::Paused)
     {
@@ -345,7 +345,7 @@ void Instance::DolphinInstance_ResumeEmulation(const ToInstanceParams_ResumeEmul
     OnReadyForNextCommand();
 }
 
-void Instance::DolphinInstance_PlayInputs(const ToInstanceParams_PlayInputs& params)
+INSTANCE_FUNC_BODY(Instance, PlayInputs, params)
 {
     // These vectors can be masive, use std::move to avoid an extra alloc (should be safe since _inputStates is not used after this)
     _playbackInputs = std::move(params._inputStates);
@@ -363,7 +363,7 @@ void Instance::DolphinInstance_PlayInputs(const ToInstanceParams_PlayInputs& par
     }
 }
 
-void Instance::DolphinInstance_FrameAdvance(const ToInstanceParams_FrameAdvance& params)
+INSTANCE_FUNC_BODY(Instance, FrameAdvance, params)
 {
     for (int index = 0; index < params._numFrames; index++)
     {
@@ -373,7 +373,7 @@ void Instance::DolphinInstance_FrameAdvance(const ToInstanceParams_FrameAdvance&
     OnReadyForNextCommand();
 }
 
-void Instance::DolphinInstance_CreateSaveState(const ToInstanceParams_CreateSaveState& params)
+INSTANCE_FUNC_BODY(Instance, CreateSaveState, params)
 {
     if (!params._filePath.empty())
     {
@@ -384,7 +384,7 @@ void Instance::DolphinInstance_CreateSaveState(const ToInstanceParams_CreateSave
 
         State::SaveAs(params._filePath, true);
     }
-    
+
     DolphinIpcToServerData ipcData;
     std::shared_ptr<ToServerParams_OnInstanceSaveStateCreated> data = std::make_shared<ToServerParams_OnInstanceSaveStateCreated>();
     data->_filePath = params._filePath;
@@ -395,10 +395,20 @@ void Instance::DolphinInstance_CreateSaveState(const ToInstanceParams_CreateSave
     OnReadyForNextCommand();
 }
 
-void Instance::DolphinInstance_FormatMemoryCard(const ToInstanceParams_FormatMemoryCard& params)
+INSTANCE_FUNC_BODY(Instance, LoadSaveState, params)
+{
+    if (File::Exists(params._filePath))
+    {
+        State::LoadAs(params._filePath);
+    }
+
+    OnReadyForNextCommand();
+}
+
+INSTANCE_FUNC_BODY(Instance, FormatMemoryCard, params)
 {
     std::string slotPath;
-    switch(params._slot)
+    switch (params._slot)
     {
         case DolphinSlot::SlotA:
         {
@@ -415,7 +425,7 @@ void Instance::DolphinInstance_FormatMemoryCard(const ToInstanceParams_FormatMem
             return;
         }
     }
-    
+
     if (!slotPath.empty())
     {
         if (File::Exists(slotPath))
@@ -438,7 +448,7 @@ void Instance::DolphinInstance_FormatMemoryCard(const ToInstanceParams_FormatMem
         const CardFlashId flash_id{};
         const u32 rtc_bias = 0;
         const u32 sram_language = 0;
-        const u64 format_time =  Common::Timer::GetLocalTimeSinceJan1970() - ExpansionInterface::CEXIIPL::GC_EPOCH;
+        const u64 format_time = Common::Timer::GetLocalTimeSinceJan1970() - ExpansionInterface::CEXIIPL::GC_EPOCH;
 
         std::optional<Memcard::GCMemcard> memcard = Memcard::GCMemcard::Create(slotPath, flash_id, size, isShiftJis, rtc_bias, sram_language, format_time);
 
@@ -448,23 +458,12 @@ void Instance::DolphinInstance_FormatMemoryCard(const ToInstanceParams_FormatMem
         }
     }
 
-
     DolphinIpcToServerData ipcData;
     std::shared_ptr<ToServerParams_OnInstanceMemoryCardFormatted> data = std::make_shared<ToServerParams_OnInstanceMemoryCardFormatted>();
     data->_slot = params._slot;
     ipcData._call = DolphinServerIpcCall::DolphinServer_OnInstanceMemoryCardFormatted;
     ipcData._params._paramsOnInstanceMemoryCardFormatted = data;
     ipcSendToServer(ipcData);
-
-    OnReadyForNextCommand();
-}
-
-void Instance::DolphinInstance_LoadSaveState(const ToInstanceParams_LoadSaveState& params)
-{
-    if (File::Exists(params._filePath))
-    {
-        State::LoadAs(params._filePath);
-    }
 
     OnReadyForNextCommand();
 }

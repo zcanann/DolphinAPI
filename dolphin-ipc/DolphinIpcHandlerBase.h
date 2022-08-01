@@ -36,6 +36,7 @@ public:
 protected:
 	#define INSTANCE_FUNC(Name) virtual void DolphinInstance_ ## Name(const ToInstanceParams_ ## Name& params ## Name) { NOT_IMPLEMENTED(); }
 	#define INSTANCE_FUNC_OVERRIDE(Name) virtual void DolphinInstance_ ## Name(const ToInstanceParams_ ## Name& params ## Name) override;
+	#define INSTANCE_FUNC_BODY(Class, Name, params) void Class::DolphinInstance_ ## Name(const ToInstanceParams_ ## Name& params)
 	INSTANCE_FUNC(Connect)
 	INSTANCE_FUNC(Heartbeat)
 	INSTANCE_FUNC(Terminate)
@@ -53,6 +54,7 @@ protected:
 protected:
 	#define SERVER_FUNC(Name) virtual void DolphinServer_ ## Name(const ToServerParams_ ## Name& params ## Name) { NOT_IMPLEMENTED(); }
 	#define SERVER_FUNC_OVERRIDE(Name) virtual void DolphinServer_ ## Name(const ToServerParams_ ## Name& params ## Name) override;
+	#define SERVER_FUNC_BODY(Class, Name, params) void Class::DolphinServer_ ## Name(const ToServerParams_ ## Name& params)
 	SERVER_FUNC(OnInstanceConnected)
 	SERVER_FUNC(OnInstanceReady)
 	SERVER_FUNC(OnInstanceHeartbeatAcknowledged)
