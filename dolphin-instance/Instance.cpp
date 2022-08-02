@@ -3,8 +3,8 @@
 
 #include "Instance.h"
 
-#include "Input.h"
 #include "InstanceConfigLoader.h"
+#include "InstanceUtils.h"
 #include "MockServer.h"
 #include "TemplateHelpers.h"
 
@@ -14,17 +14,18 @@
 #include "Core/Config/WiimoteSettings.h"
 #include "Core/ConfigManager.h"
 #include "Core/Core.h"
-#include "Core/HW/CPU.h"
-#include "Core/HW/Wiimote.h"
 #include "Core/IOS/IOS.h"
 #include "Core/IOS/STM/STM.h"
 #include "Core/State.h"
+#include "Core/HW/CPU.h"
 #include "Core/HW/DVD/DVDInterface.h"
 #include "Core/HW/EXI/EXI_DeviceIPL.h"
 #include "Core/HW/GBAPad.h"
 #include "Core/HW/GCKeyboard.h"
 #include "Core/HW/GCMemcard/GCMemcard.h"
+#include "Core/HW/GCMemcard/GCMemcardUtils.h"
 #include "Core/HW/GCPad.h"
+#include "Core/HW/Memmap.h"
 #include "Core/HW/ProcessorInterface.h"
 #include "Core/HW/SI/SI_Device.h"
 #include "Core/HW/Sram.h"
@@ -77,10 +78,8 @@ void Instance::InitializeLaunchOptions(const InstanceBootParameters& bootParams)
         StartRecording();
     }
 
-    if (bootParams.pauseOnBoot)
-    {
-        SConfig::GetInstance().bBootToPause = bootParams.pauseOnBoot;
-    }
+    _bootToPause = bootParams.pauseOnBoot;
+    SConfig::GetInstance().bBootToPause = true;
 }
 
 void Instance::SetTitle(const std::string& title)
@@ -99,10 +98,16 @@ bool Instance::Init()
     // Ipc post-ready callback
     _coreStateEventHandle = Core::AddOnStateChangedCallback([this](Core::State state)
     {
-        if (state == Core::State::Running || state == Core::State::Paused)
+        if (state == Core::State::Paused)
         {
             OnCommandCompleted(DolphinInstanceIpcCall::DolphinInstance_Connect);
             Core::RemoveOnStateChangedCallback(&_coreStateEventHandle);
+
+            InstanceUtils::ExportGci(DolphinSlot::SlotA, "C:/Projects/DolphinTAS/Content/SaveStates/Test.gci");
+            if (!_bootToPause)
+            {
+                Core::SetState(Core::State::Running);
+            }
         }
     });
 
@@ -157,7 +162,7 @@ void Instance::PrepareForTASInput()
 
                 if (_frameAdvanceInput.has_value())
                 {
-                    Input::CopyControllerStateToGcPadStatus(*_frameAdvanceInput, padStatus);
+                    InstanceUtils::CopyControllerStateToGcPadStatus(*_frameAdvanceInput, padStatus);
                 }
 
                 if (--_framesToAdvance <= 0)
@@ -192,7 +197,7 @@ void Instance::PrepareForTASInput()
                 DolphinControllerState padState = _playbackInputs.front();
                 _playbackInputs.erase(_playbackInputs.begin());
 
-                Input::CopyControllerStateToGcPadStatus(padState, padStatus);
+                InstanceUtils::CopyControllerStateToGcPadStatus(padState, padStatus);
 
                 if (padState.Disc)
                 {
@@ -227,7 +232,7 @@ void Instance::PrepareForTASInput()
             case RecordingState::Recording:
             {
                 DolphinControllerState padState;
-                Input::CopyGcPadStatusToControllerState(padStatus, padState);
+                InstanceUtils::CopyGcPadStatusToControllerState(padStatus, padState);
                 _recordingInputs.push_back(padState);
                 break;
             }
@@ -372,19 +377,26 @@ INSTANCE_FUNC_BODY(Instance, FrameAdvanceWithInput, params)
 
 INSTANCE_FUNC_BODY(Instance, CreateSaveState, params)
 {
-    if (!params._filePath.empty())
+    if (!params._filePathNoExtension.empty())
     {
-        if (File::Exists(params._filePath))
+        // Dump the save state
+        std::string savFile = params._filePathNoExtension + ".sav";
+        if (File::Exists(savFile))
         {
-            File::Delete(params._filePath);
+            File::Delete(savFile);
         }
+        State::SaveAs(savFile, true);
 
-        State::SaveAs(params._filePath, true);
+        // Dump memory card info for this game
+        std::string cardAFile = params._filePathNoExtension + ".cardA.gci";
+        std::string cardBFile = params._filePathNoExtension + ".cardB.gci";
+        InstanceUtils::ExportGci(DolphinSlot::SlotA, cardAFile);
+        InstanceUtils::ExportGci(DolphinSlot::SlotB, cardBFile);
     }
 
     DolphinIpcToServerData ipcData;
     std::shared_ptr<ToServerParams_OnInstanceSaveStateCreated> data = std::make_shared<ToServerParams_OnInstanceSaveStateCreated>();
-    data->_filePath = params._filePath;
+    data->_filePathNoExtension = params._filePathNoExtension;
     data->_recordingInputs = _recordingInputs;
     ipcData._call = DolphinServerIpcCall::DolphinServer_OnInstanceSaveStateCreated;
     ipcData._params._paramsOnInstanceSaveStateCreated = data;
@@ -405,24 +417,7 @@ INSTANCE_FUNC_BODY(Instance, LoadSaveState, params)
 
 INSTANCE_FUNC_BODY(Instance, FormatMemoryCard, params)
 {
-    std::string slotPath;
-    switch (params._slot)
-    {
-        case DolphinSlot::SlotA:
-        {
-            slotPath = Config::Get(Config::MAIN_MEMCARD_A_PATH);
-            break;
-        }
-        case DolphinSlot::SlotB:
-        {
-            slotPath = Config::Get(Config::MAIN_MEMCARD_A_PATH);
-            break;
-        }
-        default:
-        {
-            return;
-        }
-    }
+    std::string slotPath = InstanceUtils::GetPathForMemoryCardSlot(params._slot);
 
     if (!slotPath.empty())
     {

@@ -1,8 +1,16 @@
-#include "Input.h"
+#include "InstanceUtils.h"
 
 #include "InputCommon/GCPadStatus.h"
 
-void Input::CopyControllerStateToGcPadStatus(const DolphinControllerState& padState, GCPadStatus* padStatus)
+#include "Common/FileUtil.h"
+#include "Core/Config/MainSettings.h"
+#include "Core/Config/WiimoteSettings.h"
+#include "Core/ConfigManager.h"
+#include "Core/HW/GCMemcard/GCMemcard.h"
+#include "Core/HW/GCMemcard/GCMemcardUtils.h"
+#include "Core/HW/Memmap.h"
+
+void InstanceUtils::CopyControllerStateToGcPadStatus(const DolphinControllerState& padState, GCPadStatus* padStatus)
 {
     if (padStatus == nullptr)
     {
@@ -39,7 +47,7 @@ void Input::CopyControllerStateToGcPadStatus(const DolphinControllerState& padSt
     padStatus->button |= padState.GetOrigin ? PAD_GET_ORIGIN : 0;
 }
 
-void Input::CopyGcPadStatusToControllerState(GCPadStatus* padStatus, DolphinControllerState& padState)
+void InstanceUtils::CopyGcPadStatusToControllerState(GCPadStatus* padStatus, DolphinControllerState& padState)
 {
     padState.A = ((padStatus->button & PAD_BUTTON_A) != 0);
     padState.B = ((padStatus->button & PAD_BUTTON_B) != 0);
@@ -70,4 +78,79 @@ void Input::CopyGcPadStatusToControllerState(GCPadStatus* padStatus, DolphinCont
 
     padState.Disc = false; // TODO
     padState.Reset = false; // TODO
+}
+
+std::string InstanceUtils::GetPathForMemoryCardSlot(DolphinSlot slot)
+{
+    switch (slot)
+    {
+        case DolphinSlot::SlotA:
+        {
+            return Config::Get(Config::MAIN_MEMCARD_A_PATH);
+        }
+        case DolphinSlot::SlotB:
+        {
+            return Config::Get(Config::MAIN_MEMCARD_A_PATH);
+        }
+        default:
+        {
+            return "";
+        }
+    }
+}
+
+bool InstanceUtils::ExportGci(DolphinSlot slot, const std::string& filePath)
+{
+    if (filePath.empty())
+    {
+        return false;
+    }
+
+    if (File::Exists(filePath))
+    {
+        File::Delete(filePath);
+    }
+
+    std::string slotPath = InstanceUtils::GetPathForMemoryCardSlot(DolphinSlot::SlotA);
+
+    // Read the current gamecode from memory
+    std::string gameCode =
+    {
+        (char)Memory::Read_U8(0x80000000),
+        (char)Memory::Read_U8(0x80000001),
+        (char)Memory::Read_U8(0x80000002),
+        (char)Memory::Read_U8(0x80000003),
+        // (char)Memory::Read_U8(0x80000004),
+        // (char)Memory::Read_U8(0x80000005),
+    };
+
+    std::pair<Memcard::GCMemcardErrorCode, std::optional<Memcard::GCMemcard>> memoryCardOpenInfo = Memcard::GCMemcard::Open(slotPath);
+
+    if (memoryCardOpenInfo.second.has_value())
+    {
+        Memcard::GCMemcard& memoryCard = memoryCardOpenInfo.second.value();
+        const u8 numFiles = memoryCard.GetNumFiles();
+        for (int index = 0; index < numFiles; index++)
+        {
+            const u8 fileIndex = memoryCard.GetFileIndex(index);
+            std::string memoryCardGameCode = memoryCard.DEntry_GameCode(fileIndex);
+
+            if (memoryCardGameCode != gameCode)
+            {
+                break;
+            }
+
+            const std::vector<Memcard::Savefile> savefiles = Memcard::GetSavefiles(memoryCard, { fileIndex });
+
+            if (savefiles.size() <= 1)
+            {
+                if (!Memcard::WriteSavefile(filePath, savefiles[0], Memcard::SavefileFormat::GCI))
+                {
+                    File::Delete(filePath);
+                }
+            }
+        }
+    }
+
+    return true;
 }

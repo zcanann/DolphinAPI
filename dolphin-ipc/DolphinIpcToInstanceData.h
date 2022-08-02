@@ -122,12 +122,12 @@ struct ToInstanceParams_FrameAdvanceWithInput
 
 struct ToInstanceParams_CreateSaveState
 {
-	std::string _filePath;
+	std::string _filePathNoExtension;
 
 	template <class Archive>
 	void serialize(Archive& ar)
 	{
-		ar(_filePath);
+		ar(_filePathNoExtension);
 	}
 };
 

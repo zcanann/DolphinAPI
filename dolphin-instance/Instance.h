@@ -105,6 +105,7 @@ protected:
 
 	int _coreStateEventHandle = -1;
 	int _framesToAdvance = 0;
+	bool _bootToPause = false;
 	RecordingState _instanceState = RecordingState::None;
 	std::vector<DolphinControllerState> _recordingInputs;
 	std::vector<DolphinControllerState> _playbackInputs;

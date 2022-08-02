@@ -53,7 +53,7 @@ SERVER_FUNC_BODY(MockServer, OnInstanceRecordingStopped, params)
 
 SERVER_FUNC_BODY(MockServer, OnInstanceSaveStateCreated, params)
 {
-    std::cout << "save state created " << params._filePath << std::endl;
+    std::cout << "save state created " << params._filePathNoExtension << std::endl;
 }
 
 SERVER_FUNC_BODY(MockServer, OnInstanceMemoryCardFormatted, params)

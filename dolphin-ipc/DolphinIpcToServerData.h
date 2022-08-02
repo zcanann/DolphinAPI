@@ -95,13 +95,13 @@ struct ToServerParams_OnInstanceRecordingStopped
 
 struct ToServerParams_OnInstanceSaveStateCreated
 {
-	std::string _filePath;
+	std::string _filePathNoExtension;
 	std::vector<DolphinControllerState> _recordingInputs;
 
 	template <class Archive>
 	void serialize(Archive& ar)
 	{
-		ar(_filePath);
+		ar(_filePathNoExtension);
 		ar(_recordingInputs);
 	}
 };
