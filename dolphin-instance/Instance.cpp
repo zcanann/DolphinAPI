@@ -160,8 +160,15 @@ void Instance::PrepareForTASInput()
                     Input::CopyControllerStateToGcPadStatus(*_frameAdvanceInput, padStatus);
                 }
 
-                if (_framesToAdvance-- <= 0)
+                if (--_framesToAdvance <= 0)
                 {
+                    _instanceState = RecordingState::None;
+
+                    Core::QueueHostJob([=]
+                    {
+                        Core::SetState(Core::State::Paused);
+                    });
+
                     if (_frameAdvanceInput.has_value())
                     {
                         _frameAdvanceInput.reset();
@@ -207,7 +214,11 @@ void Instance::PrepareForTASInput()
                 // Inputs complete! Ready for next command
                 if (_playbackInputs.size() <= 0)
                 {
-                    Core::QueueHostJob([=] { Core::UpdateWantDeterminism(false); });
+                    Core::QueueHostJob([=]
+                    {
+                        Core::UpdateWantDeterminism(false);
+                        Core::SetState(Core::State::Paused);
+                    });
                     _instanceState = RecordingState::None;
                     OnCommandCompleted(DolphinInstanceIpcCall::DolphinInstance_PlayInputs);
                 }
@@ -338,6 +349,12 @@ INSTANCE_FUNC_BODY(Instance, FrameAdvance, params)
 {
     _framesToAdvance = params._numFrames;
     _instanceState = RecordingState::FrameAdvancing;
+
+    if (Core::GetState() == Core::State::Paused)
+    {
+        Core::SetState(Core::State::Running);
+    }
+    Core::UpdateWantDeterminism(true);
 }
 
 INSTANCE_FUNC_BODY(Instance, FrameAdvanceWithInput, params)
@@ -345,6 +362,12 @@ INSTANCE_FUNC_BODY(Instance, FrameAdvanceWithInput, params)
     _framesToAdvance = params._numFrames;
     _instanceState = RecordingState::FrameAdvancing;
     _frameAdvanceInput = params._inputState;
+
+    if (Core::GetState() == Core::State::Paused)
+    {
+        Core::SetState(Core::State::Running);
+    }
+    Core::UpdateWantDeterminism(true);
 }
 
 INSTANCE_FUNC_BODY(Instance, CreateSaveState, params)
