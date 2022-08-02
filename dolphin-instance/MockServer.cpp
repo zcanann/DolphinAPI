@@ -26,9 +26,9 @@ SERVER_FUNC_BODY(MockServer, OnInstanceConnected, params)
     std::cout << "recieved instance connected" << std::endl;
 }
 
-SERVER_FUNC_BODY(MockServer, OnInstanceReady, params)
+SERVER_FUNC_BODY(MockServer, OnInstanceCommandCompleted, params)
 {
-    std::cout << "recieved instance ready" << std::endl;
+    std::cout << "recieved instance command completed" << std::endl;
 }
 
 SERVER_FUNC_BODY(MockServer, OnInstanceHeartbeatAcknowledged, params)

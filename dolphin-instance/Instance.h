@@ -75,6 +75,7 @@ protected:
 	INSTANCE_FUNC_OVERRIDE(ResumeEmulation)
 	INSTANCE_FUNC_OVERRIDE(PlayInputs)
 	INSTANCE_FUNC_OVERRIDE(FrameAdvance)
+	INSTANCE_FUNC_OVERRIDE(FrameAdvanceWithInput)
 	INSTANCE_FUNC_OVERRIDE(CreateSaveState)
 	INSTANCE_FUNC_OVERRIDE(LoadSaveState)
 	INSTANCE_FUNC_OVERRIDE(FormatMemoryCard)
@@ -82,7 +83,7 @@ protected:
 	void UpdateRunningFlag();
 	void StartRecording();
 	void StopRecording();
-	void OnReadyForNextCommand();
+	void OnCommandCompleted(DolphinInstanceIpcCall completedCommand);
 	void Log(Common::Log::LogLevel level, const char* text) override;
 
 	Common::Flag _running{true};
@@ -99,12 +100,15 @@ protected:
 		None,
 		Recording,
 		Playback,
+		FrameAdvancing,
 	};
 
 	int _coreStateEventHandle = -1;
+	int _framesToAdvance = 0;
 	RecordingState _instanceState = RecordingState::None;
 	std::vector<DolphinControllerState> _recordingInputs;
 	std::vector<DolphinControllerState> _playbackInputs;
+	std::optional<DolphinControllerState> _frameAdvanceInput;
 
 	std::shared_ptr<MockServer> _mockServer;
 };

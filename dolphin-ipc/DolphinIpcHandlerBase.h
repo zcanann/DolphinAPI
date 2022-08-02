@@ -46,6 +46,7 @@ protected:
 	INSTANCE_FUNC(ResumeEmulation)
 	INSTANCE_FUNC(PlayInputs)
 	INSTANCE_FUNC(FrameAdvance)
+	INSTANCE_FUNC(FrameAdvanceWithInput)
 	INSTANCE_FUNC(CreateSaveState)
 	INSTANCE_FUNC(LoadSaveState)
 	INSTANCE_FUNC(FormatMemoryCard)
@@ -56,7 +57,7 @@ protected:
 	#define SERVER_FUNC_OVERRIDE(Name) virtual void DolphinServer_ ## Name(const ToServerParams_ ## Name& params ## Name) override;
 	#define SERVER_FUNC_BODY(Class, Name, params) void Class::DolphinServer_ ## Name(const ToServerParams_ ## Name& params)
 	SERVER_FUNC(OnInstanceConnected)
-	SERVER_FUNC(OnInstanceReady)
+	SERVER_FUNC(OnInstanceCommandCompleted)
 	SERVER_FUNC(OnInstanceHeartbeatAcknowledged)
 	SERVER_FUNC(OnInstanceLogOutput)
 	SERVER_FUNC(OnInstanceTerminated)

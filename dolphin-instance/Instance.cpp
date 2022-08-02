@@ -3,6 +3,7 @@
 
 #include "Instance.h"
 
+#include "Input.h"
 #include "InstanceConfigLoader.h"
 #include "MockServer.h"
 #include "TemplateHelpers.h"
@@ -100,7 +101,7 @@ bool Instance::Init()
     {
         if (state == Core::State::Running || state == Core::State::Paused)
         {
-            OnReadyForNextCommand();
+            OnCommandCompleted(DolphinInstanceIpcCall::DolphinInstance_Connect);
             Core::RemoveOnStateChangedCallback(&_coreStateEventHandle);
         }
     });
@@ -142,48 +143,49 @@ void Instance::PrepareForTASInput()
     Core::UpdateWantDeterminism();
     Movie::SetReadOnly(false);
 
-    Movie::SetGCInputManip([this](GCPadStatus* PadStatus, int ControllerId)
+    Movie::SetGCInputManip([this](GCPadStatus* padStatus, int controllerId)
     {
         switch (_instanceState)
         {
+            case RecordingState::FrameAdvancing:
+            {
+                if (_framesToAdvance <= 0)
+                {
+                    // Should never happen
+                    return;
+                }
+
+                if (_frameAdvanceInput.has_value())
+                {
+                    Input::CopyControllerStateToGcPadStatus(*_frameAdvanceInput, padStatus);
+                }
+
+                if (_framesToAdvance-- <= 0)
+                {
+                    if (_frameAdvanceInput.has_value())
+                    {
+                        _frameAdvanceInput.reset();
+                        OnCommandCompleted(DolphinInstanceIpcCall::DolphinInstance_FrameAdvanceWithInput);
+                    }
+                    else
+                    {
+                        OnCommandCompleted(DolphinInstanceIpcCall::DolphinInstance_FrameAdvance);
+                    }
+                }
+                break;
+            }
             case RecordingState::Playback:
             {
-                if (PadStatus == nullptr || _playbackInputs.size() <= 0)
+                if (_playbackInputs.size() <= 0)
                 {
+                    // Should never happen
                     return;
                 }
 
                 DolphinControllerState padState = _playbackInputs.front();
                 _playbackInputs.erase(_playbackInputs.begin());
 
-                PadStatus->isConnected = padState.IsConnected;
-
-                PadStatus->triggerLeft = padState.TriggerL;
-                PadStatus->triggerRight = padState.TriggerR;
-
-                PadStatus->stickX = padState.AnalogStickX;
-                PadStatus->stickY = padState.AnalogStickY;
-
-                PadStatus->substickX = padState.CStickX;
-                PadStatus->substickY = padState.CStickY;
-
-                PadStatus->button = 0;
-                PadStatus->button |= PAD_USE_ORIGIN;
-                PadStatus->button |= padState.A ? PAD_BUTTON_A : 0;
-                PadStatus->analogA = padState.A ? 0xFF : 0x00;
-                PadStatus->button |= padState.B ? PAD_BUTTON_B : 0;
-                PadStatus->analogB = padState.B ? 0xFF : 0x00;
-                PadStatus->button |= padState.X ? PAD_BUTTON_X : 0;
-                PadStatus->button |= padState.Y ? PAD_BUTTON_Y : 0;
-                PadStatus->button |= padState.Z ? PAD_TRIGGER_Z : 0;
-                PadStatus->button |= padState.Start ? PAD_BUTTON_START : 0;
-                PadStatus->button |= padState.DPadUp ? PAD_BUTTON_UP : 0;
-                PadStatus->button |= padState.DPadDown ? PAD_BUTTON_DOWN : 0;
-                PadStatus->button |= padState.DPadLeft ? PAD_BUTTON_LEFT : 0;
-                PadStatus->button |= padState.DPadRight ? PAD_BUTTON_RIGHT : 0;
-                PadStatus->button |= padState.L ? PAD_TRIGGER_L : 0;
-                PadStatus->button |= padState.R ? PAD_TRIGGER_R : 0;
-                PadStatus->button |= padState.GetOrigin ? PAD_GET_ORIGIN : 0;
+                Input::CopyControllerStateToGcPadStatus(padState, padStatus);
 
                 if (padState.Disc)
                 {
@@ -206,49 +208,15 @@ void Instance::PrepareForTASInput()
                 if (_playbackInputs.size() <= 0)
                 {
                     Core::QueueHostJob([=] { Core::UpdateWantDeterminism(false); });
-                    OnReadyForNextCommand();
+                    _instanceState = RecordingState::None;
+                    OnCommandCompleted(DolphinInstanceIpcCall::DolphinInstance_PlayInputs);
                 }
                 break;
             }
             case RecordingState::Recording:
             {
-                if (PadStatus == nullptr)
-                {
-                    return;
-                }
-
                 DolphinControllerState padState;
-
-                padState.A = ((PadStatus->button & PAD_BUTTON_A) != 0);
-                padState.B = ((PadStatus->button & PAD_BUTTON_B) != 0);
-                padState.X = ((PadStatus->button & PAD_BUTTON_X) != 0);
-                padState.Y = ((PadStatus->button & PAD_BUTTON_Y) != 0);
-                padState.Z = ((PadStatus->button & PAD_TRIGGER_Z) != 0);
-                padState.Start = ((PadStatus->button & PAD_BUTTON_START) != 0);
-
-                padState.DPadUp = ((PadStatus->button & PAD_BUTTON_UP) != 0);
-                padState.DPadDown = ((PadStatus->button & PAD_BUTTON_DOWN) != 0);
-                padState.DPadLeft = ((PadStatus->button & PAD_BUTTON_LEFT) != 0);
-                padState.DPadRight = ((PadStatus->button & PAD_BUTTON_RIGHT) != 0);
-
-                padState.L = ((PadStatus->button & PAD_TRIGGER_L) != 0);
-                padState.R = ((PadStatus->button & PAD_TRIGGER_R) != 0);
-                padState.TriggerL = PadStatus->triggerLeft;
-                padState.TriggerR = PadStatus->triggerRight;
-
-                padState.AnalogStickX = PadStatus->stickX;
-                padState.AnalogStickY = PadStatus->stickY;
-
-                padState.CStickX = PadStatus->substickX;
-                padState.CStickY = PadStatus->substickY;
-
-                padState.IsConnected = PadStatus->isConnected;
-
-                padState.GetOrigin = (PadStatus->button & PAD_GET_ORIGIN) != 0;
-
-                padState.Disc = false; // TODO
-                padState.Reset = false; // TODO
-
+                Input::CopyGcPadStatusToControllerState(padStatus, padState);
                 _recordingInputs.push_back(padState);
                 break;
             }
@@ -316,13 +284,13 @@ INSTANCE_FUNC_BODY(Instance, StartRecordingInput, params)
 {
     StopRecording();
     StartRecording();
-    OnReadyForNextCommand();
+    OnCommandCompleted(DolphinInstanceIpcCall::DolphinInstance_StartRecordingInput);
 }
 
 INSTANCE_FUNC_BODY(Instance, StopRecordingInput, params)
 {
     StopRecording();
-    OnReadyForNextCommand();
+    OnCommandCompleted(DolphinInstanceIpcCall::DolphinInstance_StopRecordingInput);
 }
 
 INSTANCE_FUNC_BODY(Instance, PauseEmulation, params)
@@ -332,7 +300,7 @@ INSTANCE_FUNC_BODY(Instance, PauseEmulation, params)
         Core::SetState(Core::State::Paused);
     }
 
-    OnReadyForNextCommand();
+    OnCommandCompleted(DolphinInstanceIpcCall::DolphinInstance_PauseEmulation);
 }
 
 INSTANCE_FUNC_BODY(Instance, ResumeEmulation, params)
@@ -342,7 +310,7 @@ INSTANCE_FUNC_BODY(Instance, ResumeEmulation, params)
         Core::SetState(Core::State::Running);
     }
 
-    OnReadyForNextCommand();
+    OnCommandCompleted(DolphinInstanceIpcCall::DolphinInstance_ResumeEmulation);
 }
 
 INSTANCE_FUNC_BODY(Instance, PlayInputs, params)
@@ -350,27 +318,33 @@ INSTANCE_FUNC_BODY(Instance, PlayInputs, params)
     // These vectors can be masive, use std::move to avoid an extra alloc (should be safe since _inputStates is not used after this)
     _playbackInputs = std::move(params._inputStates);
 
-    if (_playbackInputs.size() > 0)
-    {
-        _instanceState = RecordingState::Playback;
-        // Send the initial flag to force determinism, since internally this checks Movie class flags which this class does not set
-        Core::UpdateWantDeterminism(true);
-    }
-
     if (Core::GetState() == Core::State::Paused)
     {
         Core::SetState(Core::State::Running);
     }
+
+    if (_playbackInputs.size() <= 0)
+    {
+        OnCommandCompleted(DolphinInstanceIpcCall::DolphinInstance_PlayInputs);
+        return;
+    }
+
+    _instanceState = RecordingState::Playback;
+    // Send the initial flag to force determinism, since internally this checks Movie class flags which this class does not set
+    Core::UpdateWantDeterminism(true);
 }
 
 INSTANCE_FUNC_BODY(Instance, FrameAdvance, params)
 {
-    for (int index = 0; index < params._numFrames; index++)
-    {
-        Core::DoFrameStep();
-    }
+    _framesToAdvance = params._numFrames;
+    _instanceState = RecordingState::FrameAdvancing;
+}
 
-    OnReadyForNextCommand();
+INSTANCE_FUNC_BODY(Instance, FrameAdvanceWithInput, params)
+{
+    _framesToAdvance = params._numFrames;
+    _instanceState = RecordingState::FrameAdvancing;
+    _frameAdvanceInput = params._inputState;
 }
 
 INSTANCE_FUNC_BODY(Instance, CreateSaveState, params)
@@ -393,7 +367,7 @@ INSTANCE_FUNC_BODY(Instance, CreateSaveState, params)
     ipcData._params._paramsOnInstanceSaveStateCreated = data;
     ipcSendToServer(ipcData);
 
-    OnReadyForNextCommand();
+    OnCommandCompleted(DolphinInstanceIpcCall::DolphinInstance_CreateSaveState);
 }
 
 INSTANCE_FUNC_BODY(Instance, LoadSaveState, params)
@@ -403,7 +377,7 @@ INSTANCE_FUNC_BODY(Instance, LoadSaveState, params)
         State::LoadAs(params._filePath);
     }
 
-    OnReadyForNextCommand();
+    OnCommandCompleted(DolphinInstanceIpcCall::DolphinInstance_LoadSaveState);
 }
 
 INSTANCE_FUNC_BODY(Instance, FormatMemoryCard, params)
@@ -459,6 +433,7 @@ INSTANCE_FUNC_BODY(Instance, FormatMemoryCard, params)
         }
     }
 
+    // TODO: Does this event need to exist?
     DolphinIpcToServerData ipcData;
     std::shared_ptr<ToServerParams_OnInstanceMemoryCardFormatted> data = std::make_shared<ToServerParams_OnInstanceMemoryCardFormatted>();
     data->_slot = params._slot;
@@ -466,7 +441,7 @@ INSTANCE_FUNC_BODY(Instance, FormatMemoryCard, params)
     ipcData._params._paramsOnInstanceMemoryCardFormatted = data;
     ipcSendToServer(ipcData);
 
-    OnReadyForNextCommand();
+    OnCommandCompleted(DolphinInstanceIpcCall::DolphinInstance_FormatMemoryCard);
 }
 
 void Instance::UpdateRunningFlag()
@@ -534,12 +509,13 @@ void Instance::StopRecording()
     _recordingInputs.clear();
 }
 
-void Instance::OnReadyForNextCommand()
+void Instance::OnCommandCompleted(DolphinInstanceIpcCall completedCommand)
 {
     DolphinIpcToServerData ipcData;
-    std::shared_ptr<ToServerParams_OnInstanceReady> data = std::make_shared<ToServerParams_OnInstanceReady>();
-    ipcData._call = DolphinServerIpcCall::DolphinServer_OnInstanceReady;
-    ipcData._params._paramsOnInstanceReady = data;
+    std::shared_ptr<ToServerParams_OnInstanceCommandCompleted> data = std::make_shared<ToServerParams_OnInstanceCommandCompleted>();
+    data->_completedCommand = completedCommand;
+    ipcData._call = DolphinServerIpcCall::DolphinServer_OnInstanceCommandCompleted;
+    ipcData._params._paramsOnInstanceCommandCompleted = data;
     ipcSendToServer(ipcData);
 }
 

@@ -11,7 +11,7 @@ enum class DolphinServerIpcCall
 {
 	Null,
 	DolphinServer_OnInstanceConnected,
-	DolphinServer_OnInstanceReady,
+	DolphinServer_OnInstanceCommandCompleted,
 	DolphinServer_OnInstanceHeartbeatAcknowledged,
 	DolphinServer_OnInstanceLogOutput,
 	DolphinServer_OnInstanceTerminated,
@@ -28,11 +28,14 @@ struct ToServerParams_OnInstanceConnected
 	}
 };
 
-struct ToServerParams_OnInstanceReady
+struct ToServerParams_OnInstanceCommandCompleted
 {
+	DolphinInstanceIpcCall _completedCommand;
+
 	template <class Archive>
 	void serialize(Archive& ar)
 	{
+		ar(_completedCommand);
 	}
 };
 
@@ -121,7 +124,7 @@ union DolphinIpcToServerDataParams
 	~DolphinIpcToServerDataParams() {}
 
 	TO_SERVER_MEMBER(OnInstanceConnected)
-	TO_SERVER_MEMBER(OnInstanceReady)
+	TO_SERVER_MEMBER(OnInstanceCommandCompleted)
 	TO_SERVER_MEMBER(OnInstanceHeartbeatAcknowledged)
 	TO_SERVER_MEMBER(OnInstanceLogOutput)
 	TO_SERVER_MEMBER(OnInstanceTerminated)
@@ -151,7 +154,7 @@ struct DolphinIpcToServerData
 		switch (_call)
 		{
 			TO_SERVER_ARCHIVE(OnInstanceConnected)
-			TO_SERVER_ARCHIVE(OnInstanceReady)
+			TO_SERVER_ARCHIVE(OnInstanceCommandCompleted)
 			TO_SERVER_ARCHIVE(OnInstanceHeartbeatAcknowledged)
 			TO_SERVER_ARCHIVE(OnInstanceLogOutput)
 			TO_SERVER_ARCHIVE(OnInstanceTerminated)

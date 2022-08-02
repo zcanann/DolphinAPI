@@ -133,7 +133,7 @@ void DolphinIpcHandlerBase::onInstanceToServerDataReceived(const DolphinIpcToSer
     switch (data._call)
     {
         SERVER_DISPATCH(OnInstanceConnected)
-        SERVER_DISPATCH(OnInstanceReady)
+        SERVER_DISPATCH(OnInstanceCommandCompleted)
         SERVER_DISPATCH(OnInstanceHeartbeatAcknowledged)
         SERVER_DISPATCH(OnInstanceLogOutput)
         SERVER_DISPATCH(OnInstanceTerminated)
@@ -158,6 +158,7 @@ void DolphinIpcHandlerBase::onServerToInstanceDataReceived(const DolphinIpcToIns
         INSTANCE_DISPATCH(ResumeEmulation)
         INSTANCE_DISPATCH(PlayInputs)
         INSTANCE_DISPATCH(FrameAdvance)
+        INSTANCE_DISPATCH(FrameAdvanceWithInput)
         INSTANCE_DISPATCH(CreateSaveState)
         INSTANCE_DISPATCH(LoadSaveState)
         INSTANCE_DISPATCH(FormatMemoryCard)

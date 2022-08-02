@@ -26,7 +26,7 @@ public:
 
 protected:
 	SERVER_FUNC_OVERRIDE(OnInstanceConnected)
-	SERVER_FUNC_OVERRIDE(OnInstanceReady)
+	SERVER_FUNC_OVERRIDE(OnInstanceCommandCompleted)
 	SERVER_FUNC_OVERRIDE(OnInstanceHeartbeatAcknowledged)
 	SERVER_FUNC_OVERRIDE(OnInstanceLogOutput)
 	SERVER_FUNC_OVERRIDE(OnInstanceTerminated)

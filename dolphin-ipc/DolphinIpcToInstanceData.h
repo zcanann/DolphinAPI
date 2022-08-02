@@ -19,6 +19,7 @@ enum class DolphinInstanceIpcCall
 	DolphinInstance_ResumeEmulation,
 	DolphinInstance_PlayInputs,
 	DolphinInstance_FrameAdvance,
+	DolphinInstance_FrameAdvanceWithInput,
 	DolphinInstance_CreateSaveState,
 	DolphinInstance_LoadSaveState,
 	DolphinInstance_FormatMemoryCard,
@@ -106,6 +107,19 @@ struct ToInstanceParams_FrameAdvance
 	}
 };
 
+struct ToInstanceParams_FrameAdvanceWithInput
+{
+	int _numFrames = 1;
+	DolphinControllerState _inputState;
+
+	template <class Archive>
+	void serialize(Archive& ar)
+	{
+		ar(_numFrames);
+		ar(_inputState);
+	}
+};
+
 struct ToInstanceParams_CreateSaveState
 {
 	std::string _filePath;
@@ -173,6 +187,7 @@ union DolphinIpcToInstanceDataParams
 	TO_INSTANCE_MEMBER(ResumeEmulation)
 	TO_INSTANCE_MEMBER(PlayInputs)
 	TO_INSTANCE_MEMBER(FrameAdvance)
+	TO_INSTANCE_MEMBER(FrameAdvanceWithInput)
 	TO_INSTANCE_MEMBER(CreateSaveState)
 	TO_INSTANCE_MEMBER(LoadSaveState)
 	TO_INSTANCE_MEMBER(FormatMemoryCard)
@@ -207,6 +222,7 @@ struct DolphinIpcToInstanceData
 			TO_INSTANCE_ARCHIVE(ResumeEmulation)
 			TO_INSTANCE_ARCHIVE(PlayInputs)
 			TO_INSTANCE_ARCHIVE(FrameAdvance)
+			TO_INSTANCE_ARCHIVE(FrameAdvanceWithInput)
 			TO_INSTANCE_ARCHIVE(CreateSaveState)
 			TO_INSTANCE_ARCHIVE(LoadSaveState)
 			TO_INSTANCE_ARCHIVE(FormatMemoryCard)

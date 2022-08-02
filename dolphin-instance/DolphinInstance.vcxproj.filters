@@ -7,12 +7,14 @@
     <ClCompile Include="InstanceWin32.cpp" />
     <ClCompile Include="MockServer.cpp" />
     <ClCompile Include="InstanceConfigLoader.cpp" />
+    <ClCompile Include="Input.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Instance.h" />
     <ClInclude Include="MockServer.h" />
     <ClInclude Include="TemplateHelpers.h" />
     <ClInclude Include="InstanceConfigLoader.h" />
+    <ClInclude Include="Input.h" />
   </ItemGroup>
   <ItemGroup>
     <Manifest Include="DolphinInstance.exe.manifest" />
