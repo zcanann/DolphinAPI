@@ -103,7 +103,6 @@ bool Instance::Init()
             OnCommandCompleted(DolphinInstanceIpcCall::DolphinInstance_Connect);
             Core::RemoveOnStateChangedCallback(&_coreStateEventHandle);
 
-            InstanceUtils::ExportGci(DolphinSlot::SlotA, "C:/Projects/DolphinTAS/Content/SaveStates/Test.gci");
             if (!_bootToPause)
             {
                 Core::SetState(Core::State::Running);
