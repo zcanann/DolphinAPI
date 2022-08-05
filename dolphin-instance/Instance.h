@@ -79,6 +79,7 @@ protected:
 	INSTANCE_FUNC_OVERRIDE(CreateSaveState)
 	INSTANCE_FUNC_OVERRIDE(LoadSaveState)
 	INSTANCE_FUNC_OVERRIDE(FormatMemoryCard)
+	INSTANCE_FUNC_OVERRIDE(ReadMemory)
 
 	void UpdateRunningFlag();
 	void StartRecording();

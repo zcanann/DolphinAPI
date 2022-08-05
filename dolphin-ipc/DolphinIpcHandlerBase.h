@@ -50,6 +50,7 @@ protected:
 	INSTANCE_FUNC(CreateSaveState)
 	INSTANCE_FUNC(LoadSaveState)
 	INSTANCE_FUNC(FormatMemoryCard)
+	INSTANCE_FUNC(ReadMemory)
 
 	// Server implemented functions
 protected:

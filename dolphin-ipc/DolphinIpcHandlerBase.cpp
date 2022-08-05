@@ -162,6 +162,7 @@ void DolphinIpcHandlerBase::onServerToInstanceDataReceived(const DolphinIpcToIns
         INSTANCE_DISPATCH(CreateSaveState)
         INSTANCE_DISPATCH(LoadSaveState)
         INSTANCE_DISPATCH(FormatMemoryCard)
+        INSTANCE_DISPATCH(ReadMemory)
         case DolphinInstanceIpcCall::Null: default: std::cout << "NULL server => instance call!" << std::endl; break;
     }
 }

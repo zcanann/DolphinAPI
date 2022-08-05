@@ -24,6 +24,7 @@ enum class DolphinInstanceIpcCall
 	DolphinInstance_LoadSaveState,
 	DolphinInstance_FormatMemoryCard,
 	DolphinInstance_ImportGci,
+	DolphinInstance_ReadMemory,
 };
 
 struct ToInstanceParams_Connect
@@ -172,6 +173,17 @@ struct ToInstanceParams_FormatMemoryCard
 	}
 };
 
+struct ToInstanceParams_ReadMemory
+{
+	DolphinDataType _dataType;
+
+	template <class Archive>
+	void serialize(Archive& ar)
+	{
+		ar(_dataType);
+	}
+};
+
 #define TO_INSTANCE_MEMBER(Name) std::shared_ptr<ToInstanceParams_##Name> _params ## Name;
 union DolphinIpcToInstanceDataParams
 {
@@ -191,6 +203,7 @@ union DolphinIpcToInstanceDataParams
 	TO_INSTANCE_MEMBER(CreateSaveState)
 	TO_INSTANCE_MEMBER(LoadSaveState)
 	TO_INSTANCE_MEMBER(FormatMemoryCard)
+	TO_INSTANCE_MEMBER(ReadMemory)
 };
 
 #define TO_INSTANCE_ARCHIVE(Name) case DolphinInstanceIpcCall::DolphinInstance_ ## Name: \
@@ -226,6 +239,7 @@ struct DolphinIpcToInstanceData
 			TO_INSTANCE_ARCHIVE(CreateSaveState)
 			TO_INSTANCE_ARCHIVE(LoadSaveState)
 			TO_INSTANCE_ARCHIVE(FormatMemoryCard)
+			TO_INSTANCE_ARCHIVE(ReadMemory)
 		}
 	}
 };

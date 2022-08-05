@@ -9,6 +9,41 @@ enum class DolphinSlot
     SP1,
 };
 
+enum class DolphinDataType
+{
+    Int8,
+    UInt8,
+    Int16,
+    UInt16,
+    Int32,
+    UInt32,
+    Int64,
+    UInt64,
+    Float,
+    Double,
+    ArrayOfBytes,
+    String,
+};
+
+union DolphinValue
+{
+    DolphinValue() : _sByte(0) { }
+    ~DolphinValue() { }
+
+    signed char _sByte;
+    unsigned char _uByte;
+    signed short _sShort;
+    unsigned short _uShort;
+    signed int _sInt;
+    unsigned int _uInt;
+    signed long long _sLong;
+    unsigned long long _uLong;
+    float _float;
+    double _double;
+    std::vector<signed char> _sArrayOfBytes;
+    std::vector<unsigned char> _uArrayOfBytes;
+};
+
 struct DolphinControllerState
 {
     bool Start, A, B, X, Y, Z;  // Binary buttons, 6 bits

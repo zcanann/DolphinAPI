@@ -27,6 +27,7 @@
 #include "Core/HW/GCPad.h"
 #include "Core/HW/Memmap.h"
 #include "Core/HW/ProcessorInterface.h"
+#include "Core/HW/SI/SI.h"
 #include "Core/HW/SI/SI_Device.h"
 #include "Core/HW/Sram.h"
 #include "Core/HW/VideoInterface.h"
@@ -147,6 +148,23 @@ void Instance::PrepareForTASInput()
     Core::UpdateWantDeterminism();
     Movie::SetReadOnly(false);
 
+    for (int controllerIndex = 0; controllerIndex < SerialInterface::MAX_SI_CHANNELS; controllerIndex++)
+    {
+        Config::SetBaseOrCurrent(Config::GetInfoForSIDevice(static_cast<int>(controllerIndex)), SerialInterface::SIDevices::SIDEVICE_GC_CONTROLLER);
+        SerialInterface::ChangeDevice(SerialInterface::SIDevices::SIDEVICE_GC_CONTROLLER, controllerIndex);
+    }
+    if (GCAdapter::UseAdapter())
+    {
+        GCAdapter::StartScanThread();
+    }
+    else
+    {
+        GCAdapter::StopScanThread();
+    }
+
+    // TODO: Potentially enable this if we want to support dumping DTM files
+    // Movie::BeginRecordingInput(controllers, wiimotes);*/
+
     Movie::SetGCInputManip([this](GCPadStatus* padStatus, int controllerId)
     {
         switch (_instanceState)
@@ -242,33 +260,6 @@ void Instance::PrepareForTASInput()
             }
         }
     });
-
-    /*
-    Movie::ControllerTypeArray controllers { };
-    Movie::WiimoteEnabledArray wiimotes { };
-
-    for (int index = 0; index < 4; index++)
-    {
-        const SerialInterface::SIDevices si_device = Config::Get(Config::GetInfoForSIDevice(index));
-
-        if (si_device == SerialInterface::SIDEVICE_GC_GBA_EMULATED)
-        {
-            controllers[index] = Movie::ControllerType::GBA;
-        }
-        else if (SerialInterface::SIDevice_IsGCController(si_device))
-        {
-            controllers[index] = Movie::ControllerType::GC;
-        }
-        else
-        {
-            controllers[index] = Movie::ControllerType::None;
-        }
-
-        wiimotes[index] = Config::Get(Config::GetInfoForWiimoteSource(index)) != WiimoteSource::None;
-    }
-
-    // TODO: Potentially enable this if we want to support dumping DTM files
-    // Movie::BeginRecordingInput(controllers, wiimotes);*/
 }
 
 INSTANCE_FUNC_BODY(Instance, Connect, params)
@@ -459,6 +450,10 @@ INSTANCE_FUNC_BODY(Instance, FormatMemoryCard, params)
     ipcSendToServer(ipcData);
 
     OnCommandCompleted(DolphinInstanceIpcCall::DolphinInstance_FormatMemoryCard);
+}
+
+INSTANCE_FUNC_BODY(Instance, ReadMemory, params)
+{
 }
 
 void Instance::UpdateRunningFlag()

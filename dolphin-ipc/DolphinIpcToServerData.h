@@ -18,6 +18,7 @@ enum class DolphinServerIpcCall
 	DolphinServer_OnInstanceRecordingStopped,
 	DolphinServer_OnInstanceSaveStateCreated,
 	DolphinServer_OnInstanceMemoryCardFormatted,
+	DolphinServer_OnInstanceMemoryRead,
 };
 
 struct ToServerParams_OnInstanceConnected
