@@ -454,6 +454,135 @@ INSTANCE_FUNC_BODY(Instance, FormatMemoryCard, params)
 
 INSTANCE_FUNC_BODY(Instance, ReadMemory, params)
 {
+    DolphinValue result;
+
+    // Resolve address pointer if needed
+    unsigned long long address = params._address;
+    for (unsigned long long offset : params._pointerOffsets)
+    {
+        address = Memory::Read_U32(address) + offset;
+    }
+
+    // Note: union will take care of signed/unsigned/type conversions
+    switch (params._dataType)
+    {
+        case DolphinDataType::Int8:
+        case DolphinDataType::UInt8:
+        {
+            result._valueUInt8 = Memory::Read_U8(params._address);
+            break;
+        }
+        case DolphinDataType::Int16:
+        case DolphinDataType::UInt16:
+        {
+            result._valueUInt16 = Memory::Read_U16(params._address);
+            break;
+        }
+        case DolphinDataType::Int32:
+        case DolphinDataType::UInt32:
+        case DolphinDataType::Float:
+        {
+            result._valueUInt32 = Memory::Read_U32(params._address);
+            break;
+        }
+        case DolphinDataType::Int64:
+        case DolphinDataType::UInt64:
+        case DolphinDataType::Double:
+        {
+            result._valueUInt64 = Memory::Read_U64(params._address);
+            break;
+        }
+        case DolphinDataType::String:
+        {
+            result._valueString = Memory::GetString(params._address, params._stringOrVectorLength);
+            break;
+        }
+        case DolphinDataType::ArrayOfBytes:
+        {
+            std::string rawBytes = Memory::GetString(params._address, params._stringOrVectorLength);
+            result._valueArrayOfBytes = std::vector<signed char>(rawBytes.begin(), rawBytes.end());
+            break;
+        }
+        case DolphinDataType::UArrayOfBytes:
+        {
+            std::string rawBytes = Memory::GetString(params._address, params._stringOrVectorLength);
+            result._valueUArrayOfBytes = std::vector<unsigned char>(rawBytes.begin(), rawBytes.end());
+            break;
+        }
+    }
+
+    DolphinIpcToServerData ipcData;
+    std::shared_ptr<ToServerParams_OnInstanceMemoryRead> data = std::make_shared<ToServerParams_OnInstanceMemoryRead>();
+    data->_dolphinValue.CopyFrom(result, params._dataType);
+    data->_dataType = params._dataType;
+    ipcData._call = DolphinServerIpcCall::DolphinServer_OnInstanceMemoryRead;
+    ipcData._params._paramsOnInstanceMemoryRead = data;
+    ipcSendToServer(ipcData);
+}
+
+INSTANCE_FUNC_BODY(Instance, WriteMemory, params)
+{
+    // Resolve address pointer if needed
+    unsigned long long address = params._address;
+    for (unsigned long long offset : params._pointerOffsets)
+    {
+        address = Memory::Read_U32(address) + offset;
+    }
+
+    // Note: union will take care of signed/unsigned/type conversions
+    switch (params._dataType)
+    {
+        case DolphinDataType::Int8:
+        case DolphinDataType::UInt8:
+        {
+            Memory::Write_U8(params._dolphinValue._valueUInt8, params._address);
+            break;
+        }
+        case DolphinDataType::Int16:
+        case DolphinDataType::UInt16:
+        {
+            Memory::Write_U16(params._dolphinValue._valueUInt16, params._address);
+            break;
+        }
+        case DolphinDataType::Int32:
+        case DolphinDataType::UInt32:
+        case DolphinDataType::Float:
+        {
+            Memory::Write_U32(params._dolphinValue._valueUInt32, params._address);
+            break;
+        }
+        case DolphinDataType::Int64:
+        case DolphinDataType::UInt64:
+        case DolphinDataType::Double:
+        {
+            Memory::Write_U64(params._dolphinValue._valueUInt64, params._address);
+            break;
+        }
+        case DolphinDataType::String:
+        {
+            for (char next : params._dolphinValue._valueString)
+            {
+                Memory::Write_U8(static_cast<unsigned char>(next), params._address);
+            }
+            break;
+        }
+        case DolphinDataType::ArrayOfBytes:
+        {
+            for (signed char next : params._dolphinValue._valueArrayOfBytes)
+            {
+                Memory::Write_U8(static_cast<unsigned char>(next), params._address);
+            }
+            break;
+        }
+        case DolphinDataType::UArrayOfBytes:
+        {
+            for (unsigned char next : params._dolphinValue._valueUArrayOfBytes)
+            {
+                Memory::Write_U8(next, params._address);
+            }
+            break;
+        }
+    }
 }
 
 void Instance::UpdateRunningFlag()

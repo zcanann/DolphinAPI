@@ -140,6 +140,8 @@ void DolphinIpcHandlerBase::onInstanceToServerDataReceived(const DolphinIpcToSer
         SERVER_DISPATCH(OnInstanceRecordingStopped)
         SERVER_DISPATCH(OnInstanceSaveStateCreated)
         SERVER_DISPATCH(OnInstanceMemoryCardFormatted)
+        SERVER_DISPATCH(OnInstanceMemoryRead)
+        SERVER_DISPATCH(OnInstanceMemoryWrite)
         case DolphinServerIpcCall::Null: default: std::cout << "NULL instance => server call!" << std::endl; break;
     }
 }
@@ -163,6 +165,7 @@ void DolphinIpcHandlerBase::onServerToInstanceDataReceived(const DolphinIpcToIns
         INSTANCE_DISPATCH(LoadSaveState)
         INSTANCE_DISPATCH(FormatMemoryCard)
         INSTANCE_DISPATCH(ReadMemory)
+        INSTANCE_DISPATCH(WriteMemory)
         case DolphinInstanceIpcCall::Null: default: std::cout << "NULL server => instance call!" << std::endl; break;
     }
 }

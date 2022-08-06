@@ -22,26 +22,69 @@ enum class DolphinDataType
     Float,
     Double,
     ArrayOfBytes,
+    UArrayOfBytes,
     String,
 };
 
 union DolphinValue
 {
-    DolphinValue() : _sByte(0) { }
+    DolphinValue() : _valueInt8(0) { }
     ~DolphinValue() { }
 
-    signed char _sByte;
-    unsigned char _uByte;
-    signed short _sShort;
-    unsigned short _uShort;
-    signed int _sInt;
-    unsigned int _uInt;
-    signed long long _sLong;
-    unsigned long long _uLong;
-    float _float;
-    double _double;
-    std::vector<signed char> _sArrayOfBytes;
-    std::vector<unsigned char> _uArrayOfBytes;
+    void CopyFrom(const DolphinValue& other, DolphinDataType dataType)
+    {
+        switch (dataType)
+        {
+            case DolphinDataType::Int8: _valueInt8 = other._valueInt8; break;
+            case DolphinDataType::UInt8: _valueUInt8 = other._valueUInt8; break;
+            case DolphinDataType::Int16: _valueInt16 = other._valueInt16; break;
+            case DolphinDataType::UInt16: _valueUInt16 = other._valueUInt16; break;
+            case DolphinDataType::Int32: _valueInt32 = other._valueInt32; break;
+            case DolphinDataType::UInt32: _valueUInt32 = other._valueUInt32; break;
+            case DolphinDataType::Int64: _valueInt64 = other._valueInt64; break;
+            case DolphinDataType::UInt64: _valueUInt64 = other._valueUInt64; break;
+            case DolphinDataType::Float: _valueFloat = other._valueFloat; break;
+            case DolphinDataType::Double: _valueDouble = other._valueDouble; break;
+            case DolphinDataType::ArrayOfBytes: _valueArrayOfBytes = other._valueArrayOfBytes; break;
+            case DolphinDataType::UArrayOfBytes: _valueUArrayOfBytes = other._valueUArrayOfBytes; break;
+            case DolphinDataType::String: _valueString = other._valueString; break;
+        }
+    }
+
+    template <class Archive>
+    void Serialize(Archive& ar, DolphinDataType dataType)
+    {
+        switch (dataType)
+        {
+            case DolphinDataType::Int8: ar(_valueInt8); break;
+            case DolphinDataType::UInt8: ar(_valueUInt8); break;
+            case DolphinDataType::Int16: ar(_valueInt16); break;
+            case DolphinDataType::UInt16: ar(_valueUInt16); break;
+            case DolphinDataType::Int32: ar(_valueInt32); break;
+            case DolphinDataType::UInt32: ar(_valueUInt32); break;
+            case DolphinDataType::Int64: ar(_valueInt64); break;
+            case DolphinDataType::UInt64: ar(_valueUInt64); break;
+            case DolphinDataType::Float: ar(_valueFloat); break;
+            case DolphinDataType::Double: ar(_valueDouble); break;
+            case DolphinDataType::ArrayOfBytes: ar(_valueArrayOfBytes); break;
+            case DolphinDataType::UArrayOfBytes: ar(_valueUArrayOfBytes); break;
+            case DolphinDataType::String: ar(_valueString); break;
+        }
+    }
+
+    signed char _valueInt8;
+    unsigned char _valueUInt8;
+    signed short _valueInt16;
+    unsigned short _valueUInt16;
+    signed int _valueInt32;
+    unsigned int _valueUInt32;
+    signed long long _valueInt64;
+    unsigned long long _valueUInt64;
+    float _valueFloat;
+    double _valueDouble;
+    std::vector<signed char> _valueArrayOfBytes;
+    std::vector<unsigned char> _valueUArrayOfBytes;
+    std::string _valueString;
 };
 
 struct DolphinControllerState

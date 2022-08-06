@@ -51,6 +51,7 @@ protected:
 	INSTANCE_FUNC(LoadSaveState)
 	INSTANCE_FUNC(FormatMemoryCard)
 	INSTANCE_FUNC(ReadMemory)
+	INSTANCE_FUNC(WriteMemory)
 
 	// Server implemented functions
 protected:
@@ -65,6 +66,8 @@ protected:
 	SERVER_FUNC(OnInstanceRecordingStopped)
 	SERVER_FUNC(OnInstanceSaveStateCreated)
 	SERVER_FUNC(OnInstanceMemoryCardFormatted)
+	SERVER_FUNC(OnInstanceMemoryRead)
+	SERVER_FUNC(OnInstanceMemoryWrite)
 
 private:
 	template<class T>

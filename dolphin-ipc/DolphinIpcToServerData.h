@@ -19,6 +19,7 @@ enum class DolphinServerIpcCall
 	DolphinServer_OnInstanceSaveStateCreated,
 	DolphinServer_OnInstanceMemoryCardFormatted,
 	DolphinServer_OnInstanceMemoryRead,
+	DolphinServer_OnInstanceMemoryWrite,
 };
 
 struct ToServerParams_OnInstanceConnected
@@ -118,6 +119,30 @@ struct ToServerParams_OnInstanceMemoryCardFormatted
 	}
 };
 
+struct ToServerParams_OnInstanceMemoryRead
+{
+	DolphinDataType _dataType;
+	DolphinValue _dolphinValue;
+
+	template <class Archive>
+	void serialize(Archive& ar)
+	{
+		ar(_dataType);
+		_dolphinValue.Serialize(ar, _dataType);
+	}
+};
+
+struct ToServerParams_OnInstanceMemoryWrite
+{
+	bool _success = false;
+
+	template <class Archive>
+	void serialize(Archive& ar)
+	{
+		ar(_success);
+	}
+};
+
 #define TO_SERVER_MEMBER(Name) std::shared_ptr<ToServerParams_##Name> _params ## Name;
 union DolphinIpcToServerDataParams
 {
@@ -132,6 +157,8 @@ union DolphinIpcToServerDataParams
 	TO_SERVER_MEMBER(OnInstanceRecordingStopped)
 	TO_SERVER_MEMBER(OnInstanceSaveStateCreated)
 	TO_SERVER_MEMBER(OnInstanceMemoryCardFormatted)
+	TO_SERVER_MEMBER(OnInstanceMemoryRead)
+	TO_SERVER_MEMBER(OnInstanceMemoryWrite)
 };
 
 #define TO_SERVER_ARCHIVE(Name) case DolphinServerIpcCall::DolphinServer_ ## Name: \
@@ -162,6 +189,8 @@ struct DolphinIpcToServerData
 			TO_SERVER_ARCHIVE(OnInstanceRecordingStopped)
 			TO_SERVER_ARCHIVE(OnInstanceSaveStateCreated)
 			TO_SERVER_ARCHIVE(OnInstanceMemoryCardFormatted)
+			TO_SERVER_ARCHIVE(OnInstanceMemoryRead)
+			TO_SERVER_ARCHIVE(OnInstanceMemoryWrite)
 		}
 	}
 };
