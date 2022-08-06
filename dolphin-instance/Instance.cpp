@@ -90,10 +90,8 @@ void Instance::SetTitle(const std::string& title)
 bool Instance::Init()
 {
     // Ipc post-connect callback
-    DolphinIpcToServerData ipcData;
-    std::shared_ptr<ToServerParams_OnInstanceConnected> data = std::make_shared<ToServerParams_OnInstanceConnected>();
+    CREATE_TO_SERVER_DATA(OnInstanceConnected, ipcData, data)
     ipcData._call = DolphinServerIpcCall::DolphinServer_OnInstanceConnected;
-    ipcData._params._paramsOnInstanceConnected = data;
     ipcSendToServer(ipcData);
 
     // Ipc post-ready callback
@@ -271,12 +269,9 @@ INSTANCE_FUNC_BODY(Instance, Heartbeat, params)
     _lastHeartbeat = std::chrono::system_clock::now();
 
     // Acknowledge heartbeat, sending over any state data the server may want.
-    DolphinIpcToServerData ipcData;
-    std::shared_ptr<ToServerParams_OnInstanceHeartbeatAcknowledged> data = std::make_shared<ToServerParams_OnInstanceHeartbeatAcknowledged>();
+    CREATE_TO_SERVER_DATA(OnInstanceHeartbeatAcknowledged, ipcData, data)
     data->_isRecording = _instanceState == RecordingState::Recording;
     data->_isPaused = Core::GetState() == Core::State::Paused;
-    ipcData._call = DolphinServerIpcCall::DolphinServer_OnInstanceHeartbeatAcknowledged;
-    ipcData._params._paramsOnInstanceHeartbeatAcknowledged = data;
     ipcSendToServer(ipcData);
 }
 
@@ -384,12 +379,9 @@ INSTANCE_FUNC_BODY(Instance, CreateSaveState, params)
         InstanceUtils::ExportGci(DolphinSlot::SlotB, cardBFile);
     }
 
-    DolphinIpcToServerData ipcData;
-    std::shared_ptr<ToServerParams_OnInstanceSaveStateCreated> data = std::make_shared<ToServerParams_OnInstanceSaveStateCreated>();
+    CREATE_TO_SERVER_DATA(OnInstanceSaveStateCreated, ipcData, data)
     data->_filePathNoExtension = params._filePathNoExtension;
     data->_recordingInputs = _recordingInputs;
-    ipcData._call = DolphinServerIpcCall::DolphinServer_OnInstanceSaveStateCreated;
-    ipcData._params._paramsOnInstanceSaveStateCreated = data;
     ipcSendToServer(ipcData);
 
     OnCommandCompleted(DolphinInstanceIpcCall::DolphinInstance_CreateSaveState);
@@ -442,11 +434,8 @@ INSTANCE_FUNC_BODY(Instance, FormatMemoryCard, params)
     }
 
     // TODO: Does this event need to exist?
-    DolphinIpcToServerData ipcData;
-    std::shared_ptr<ToServerParams_OnInstanceMemoryCardFormatted> data = std::make_shared<ToServerParams_OnInstanceMemoryCardFormatted>();
+    CREATE_TO_SERVER_DATA(OnInstanceMemoryCardFormatted, ipcData, data)
     data->_slot = params._slot;
-    ipcData._call = DolphinServerIpcCall::DolphinServer_OnInstanceMemoryCardFormatted;
-    ipcData._params._paramsOnInstanceMemoryCardFormatted = data;
     ipcSendToServer(ipcData);
 
     OnCommandCompleted(DolphinInstanceIpcCall::DolphinInstance_FormatMemoryCard);
@@ -511,12 +500,9 @@ INSTANCE_FUNC_BODY(Instance, ReadMemory, params)
         }
     }
 
-    DolphinIpcToServerData ipcData;
-    std::shared_ptr<ToServerParams_OnInstanceMemoryRead> data = std::make_shared<ToServerParams_OnInstanceMemoryRead>();
+    CREATE_TO_SERVER_DATA(OnInstanceMemoryRead, ipcData, data)
     data->_dolphinValue.CopyFrom(result, params._dataType);
     data->_dataType = params._dataType;
-    ipcData._call = DolphinServerIpcCall::DolphinServer_OnInstanceMemoryRead;
-    ipcData._params._paramsOnInstanceMemoryRead = data;
     ipcSendToServer(ipcData);
 }
 
@@ -640,11 +626,8 @@ void Instance::StopRecording()
     _instanceState = RecordingState::None;
     Core::UpdateWantDeterminism(false);
 
-    DolphinIpcToServerData ipcData;
-    std::shared_ptr<ToServerParams_OnInstanceRecordingStopped> data = std::make_shared<ToServerParams_OnInstanceRecordingStopped>();
+    CREATE_TO_SERVER_DATA(OnInstanceRecordingStopped, ipcData, data)
     data->_inputStates = _recordingInputs;
-    ipcData._call = DolphinServerIpcCall::DolphinServer_OnInstanceRecordingStopped;
-    ipcData._params._paramsOnInstanceRecordingStopped = data;
     ipcSendToServer(ipcData);
 
     _recordingInputs.clear();
@@ -652,11 +635,8 @@ void Instance::StopRecording()
 
 void Instance::OnCommandCompleted(DolphinInstanceIpcCall completedCommand)
 {
-    DolphinIpcToServerData ipcData;
-    std::shared_ptr<ToServerParams_OnInstanceCommandCompleted> data = std::make_shared<ToServerParams_OnInstanceCommandCompleted>();
+    CREATE_TO_SERVER_DATA(OnInstanceCommandCompleted, ipcData, data)
     data->_completedCommand = completedCommand;
-    ipcData._call = DolphinServerIpcCall::DolphinServer_OnInstanceCommandCompleted;
-    ipcData._params._paramsOnInstanceCommandCompleted = data;
     ipcSendToServer(ipcData);
 }
 
@@ -666,12 +646,9 @@ void Instance::Log(Common::Log::LogLevel level, const char* text)
     ToServerParams_OnInstanceLogOutput::LogLevel logLevel = (ToServerParams_OnInstanceLogOutput::LogLevel)level;
     std::string logString = std::string(text);
 
-    DolphinIpcToServerData ipcData;
-    std::shared_ptr<ToServerParams_OnInstanceLogOutput> data = std::make_shared<ToServerParams_OnInstanceLogOutput>();
+    CREATE_TO_SERVER_DATA(OnInstanceLogOutput, ipcData, data)
     data->_logLevel = logLevel;
     data->_logString = logString;
-    ipcData._call = DolphinServerIpcCall::DolphinServer_OnInstanceLogOutput;
-    ipcData._params._paramsOnInstanceLogOutput = data;
     ipcSendToServer(ipcData);
 }
 

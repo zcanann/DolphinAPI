@@ -6,6 +6,16 @@
 #define SERVER_FUNC_BODY(Class, Name, params) void Class::DolphinServer_ ## Name(const ToServerParams_ ## Name& params)
 
 #define NOT_IMPLEMENTED() std::cout << "CALLED UNIMPLEMENTED HANDLER FUNC" << std::endl;
+#define CREATE_TO_INSTANCE_DATA(IpcCall, IpcVariableName, VariableName) \
+	DolphinIpcToInstanceData IpcVariableName; \
+	std::shared_ptr<ToInstanceParams_ ## IpcCall> ##VariableName = std::make_shared<ToInstanceParams_ ## IpcCall>(); \
+	IpcVariableName._call = DolphinInstanceIpcCall::DolphinInstance_ ## IpcCall; \
+	IpcVariableName._params._params ## IpcCall = ##VariableName;
+#define CREATE_TO_SERVER_DATA(IpcCall, IpcVariableName, VariableName) \
+	DolphinIpcToServerData IpcVariableName; \
+	std::shared_ptr<ToServerParams_ ## IpcCall> ##VariableName = std::make_shared<ToServerParams_ ## IpcCall>(); \
+	IpcVariableName._call = DolphinServerIpcCall::DolphinServer_ ## IpcCall; \
+	IpcVariableName._params._params ## IpcCall = ##VariableName;
 
 #define TO_INSTANCE_MEMBER(Name) std::shared_ptr<ToInstanceParams_##Name> _params ## Name;
 #define TO_INSTANCE_ARCHIVE(Name) case DolphinInstanceIpcCall::DolphinInstance_ ## Name: \
