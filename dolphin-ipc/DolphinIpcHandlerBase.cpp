@@ -78,7 +78,7 @@ void DolphinIpcHandlerBase::ipcSendData(ipc::channel* channel, const T& data)
         std::string dataBuffer = memoryStream.str();
 
         std::cout << __func__ << ": try send..." << std::endl;
-        if (channel->send(dataBuffer))
+        if (channel->try_send(dataBuffer, 5000))
         {
             std::cout << __func__ << ": sent " << dataBuffer.size() << " bytes" << std::endl;
         }

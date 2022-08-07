@@ -99,8 +99,8 @@ bool Instance::Init()
     {
         if (state == Core::State::Paused)
         {
-            OnCommandCompleted(DolphinInstanceIpcCall::DolphinInstance_Connect);
             Core::RemoveOnStateChangedCallback(&_coreStateEventHandle);
+            OnCommandCompleted(DolphinInstanceIpcCall::DolphinInstance_Connect);
 
             if (!_bootToPause)
             {
@@ -108,7 +108,6 @@ bool Instance::Init()
             }
         }
     });
-
 
     InitControllers();
     PrepareForTASInput();
@@ -504,6 +503,8 @@ INSTANCE_FUNC_BODY(Instance, ReadMemory, params)
     data->_dolphinValue.CopyFrom(result, params._dataType);
     data->_dataType = params._dataType;
     ipcSendToServer(ipcData);
+
+    OnCommandCompleted(DolphinInstanceIpcCall::DolphinInstance_ReadMemory);
 }
 
 INSTANCE_FUNC_BODY(Instance, WriteMemory, params)
@@ -569,6 +570,8 @@ INSTANCE_FUNC_BODY(Instance, WriteMemory, params)
             break;
         }
     }
+
+    OnCommandCompleted(DolphinInstanceIpcCall::DolphinInstance_WriteMemory);
 }
 
 void Instance::UpdateRunningFlag()

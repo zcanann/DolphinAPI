@@ -178,7 +178,7 @@ struct ToInstanceParams_ReadMemory
 {
 	DolphinDataType _dataType;
 	unsigned long long _address;
-	std::vector<unsigned long long> _pointerOffsets;
+	std::vector<int> _pointerOffsets;
 	int _stringOrVectorLength = 0;
 
 	template <class Archive>
