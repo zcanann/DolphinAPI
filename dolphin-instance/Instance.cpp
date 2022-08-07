@@ -482,19 +482,35 @@ INSTANCE_FUNC_BODY(Instance, ReadMemory, params)
         }
         case DolphinDataType::String:
         {
-            result._valueString = Memory::GetString(params._address, params._stringOrVectorLength);
+            // TODO: This does not actually work due to some quirks of unions. Need to move string/vectors out of the union.
+            std::string value = "";
+            for (int index = 0; index < params._stringOrVectorLength; index++)
+            {
+                value += Memory::Read_U8(params._address + index);
+            }
+            result._valueString = value;
             break;
         }
         case DolphinDataType::ArrayOfBytes:
         {
-            std::string rawBytes = Memory::GetString(params._address, params._stringOrVectorLength);
-            result._valueArrayOfBytes = std::vector<signed char>(rawBytes.begin(), rawBytes.end());
+            // TODO: This does not actually work due to some quirks of unions. Need to move string/vectors out of the union.
+            std::vector<signed char> value = std::vector<signed char>();
+            for (int index = 0; index < params._stringOrVectorLength; index++)
+            {
+                value.push_back(static_cast<signed char>(Memory::Read_U8(params._address + index)));
+            }
+            result._valueArrayOfBytes = value;
             break;
         }
-        case DolphinDataType::UArrayOfBytes:
+        // TODO: This does not actually work due to some quirks of unions. Need to move string/vectors out of the union.
+        case DolphinDataType::ArrayOfUBytes:
         {
-            std::string rawBytes = Memory::GetString(params._address, params._stringOrVectorLength);
-            result._valueUArrayOfBytes = std::vector<unsigned char>(rawBytes.begin(), rawBytes.end());
+            std::vector<unsigned char> value = std::vector<unsigned char>();
+            for (int index = 0; index < params._stringOrVectorLength; index++)
+            {
+                value.push_back(static_cast<unsigned char>(Memory::Read_U8(params._address + index)));
+            }
+            result._valueArrayOfUBytes = value;
             break;
         }
     }
@@ -561,9 +577,9 @@ INSTANCE_FUNC_BODY(Instance, WriteMemory, params)
             }
             break;
         }
-        case DolphinDataType::UArrayOfBytes:
+        case DolphinDataType::ArrayOfUBytes:
         {
-            for (unsigned char next : params._dolphinValue._valueUArrayOfBytes)
+            for (unsigned char next : params._dolphinValue._valueArrayOfUBytes)
             {
                 Memory::Write_U8(next, params._address);
             }

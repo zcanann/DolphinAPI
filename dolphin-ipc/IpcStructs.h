@@ -22,7 +22,7 @@ enum class DolphinDataType
     Float,
     Double,
     ArrayOfBytes,
-    UArrayOfBytes,
+    ArrayOfUBytes,
     String,
 };
 
@@ -46,7 +46,7 @@ union DolphinValue
             case DolphinDataType::Float: _valueFloat = other._valueFloat; break;
             case DolphinDataType::Double: _valueDouble = other._valueDouble; break;
             case DolphinDataType::ArrayOfBytes: _valueArrayOfBytes = other._valueArrayOfBytes; break;
-            case DolphinDataType::UArrayOfBytes: _valueUArrayOfBytes = other._valueUArrayOfBytes; break;
+            case DolphinDataType::ArrayOfUBytes: _valueArrayOfUBytes = other._valueArrayOfUBytes; break;
             case DolphinDataType::String: _valueString = other._valueString; break;
         }
     }
@@ -67,7 +67,7 @@ union DolphinValue
             case DolphinDataType::Float: ar(_valueFloat); break;
             case DolphinDataType::Double: ar(_valueDouble); break;
             case DolphinDataType::ArrayOfBytes: ar(_valueArrayOfBytes); break;
-            case DolphinDataType::UArrayOfBytes: ar(_valueUArrayOfBytes); break;
+            case DolphinDataType::ArrayOfUBytes: ar(_valueArrayOfUBytes); break;
             case DolphinDataType::String: ar(_valueString); break;
         }
     }
@@ -83,7 +83,7 @@ union DolphinValue
     float _valueFloat;
     double _valueDouble;
     std::vector<signed char> _valueArrayOfBytes;
-    std::vector<unsigned char> _valueUArrayOfBytes;
+    std::vector<unsigned char> _valueArrayOfUBytes;
     std::string _valueString;
 };
 
