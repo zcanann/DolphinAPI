@@ -162,7 +162,7 @@ u32 InstanceUtils::ResolvePointer(u32 address, std::vector<s32> offsets)
         if (void* pointer = InstanceUtils::GetPointerForRange(address, sizeof(address)))
         {
             memcpy(&address, pointer, sizeof(address));
-            Common::swap32(address);
+            address = Common::swap32(address);
             address += offset;
         }
     }
