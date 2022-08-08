@@ -176,33 +176,29 @@ struct ToInstanceParams_FormatMemoryCard
 
 struct ToInstanceParams_ReadMemory
 {
-	DolphinDataType _dataType;
-	unsigned long long _address;
+	unsigned int _address;
 	std::vector<int> _pointerOffsets;
-	int _stringOrVectorLength = 0;
+	int _numberOfBytes = 0;
 
 	template <class Archive>
 	void serialize(Archive& ar)
 	{
-		ar(_dataType);
 		ar(_address);
 		ar(_pointerOffsets);
-		ar(_stringOrVectorLength);
+		ar(_numberOfBytes);
 	}
 };
 
 struct ToInstanceParams_WriteMemory
 {
-	DolphinDataType _dataType;
-	DolphinValue _dolphinValue;
-	unsigned long long _address;
-	std::vector<unsigned long long> _pointerOffsets;
+	std::vector<unsigned char> _bytes;
+	unsigned int _address;
+	std::vector<int> _pointerOffsets;
 
 	template <class Archive>
 	void serialize(Archive& ar)
 	{
-		ar(_dataType);
-		_dolphinValue.Serialize(ar, _dataType);
+		ar(_bytes);
 		ar(_address);
 		ar(_pointerOffsets);
 	}

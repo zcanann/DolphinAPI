@@ -154,3 +154,80 @@ bool InstanceUtils::ExportGci(DolphinSlot slot, const std::string& filePath)
 
     return true;
 }
+
+u32 InstanceUtils::ResolvePointer(u32 address, std::vector<s32> offsets)
+{
+    for (unsigned long long offset : offsets)
+    {
+        if (void* pointer = InstanceUtils::GetPointerForRange(address, sizeof(address)))
+        {
+            memcpy(&address, pointer, sizeof(address));
+            Common::swap32(address);
+            address += offset;
+        }
+    }
+
+    return address;
+}
+
+std::vector<u8> InstanceUtils::ReadBytes(u32 address, s32 numberOfBytes)
+{
+    std::vector<u8> bytes = std::vector<u8>(numberOfBytes);
+    void* pointer = InstanceUtils::GetPointerForRange(address, numberOfBytes);
+
+    if (pointer)
+    {
+        memcpy(bytes.data(), pointer, numberOfBytes);
+    }
+
+    return bytes;
+}
+
+void InstanceUtils::WriteBytes(u32 address, std::vector<u8> bytes)
+{
+    void* pointer = InstanceUtils::GetPointerForRange(address, bytes.size());
+
+    if (pointer)
+    {
+        memcpy(pointer, bytes.data(), bytes.size());
+    }
+}
+
+u8* InstanceUtils::GetPointerForRange(u32 address, size_t size)
+{
+    // Make sure we don't have a range spanning 2 separate banks
+    if (size <= 0 || size >= Memory::GetExRamSizeReal())
+    {;
+        return nullptr;
+    }
+
+    // Check that the beginning and end of the range are valid
+    u8* pointer = InstanceUtils::GetPointer(address);
+    if (!pointer || !InstanceUtils::GetPointer(address + u32(size) - 1))
+    {
+        // A panic alert has already been raised by GetPointer
+        return nullptr;
+    }
+
+    return pointer;
+}
+
+// Reimplementation of Memory::GetPointer() with no panics
+u8* InstanceUtils::GetPointer(u32 address)
+{
+    address &= 0x3FFFFFFF;
+    if (address < Memory::GetRamSizeReal())
+    {
+        return Memory::m_pRAM + address;
+    }
+
+    if (Memory::m_pEXRAM)
+    {
+        if ((address >> 28) == 0x1 && (address & 0x0fffffff) < Memory::GetExRamSizeReal())
+        {
+            return Memory::m_pEXRAM + (address & Memory::GetExRamMask());
+        }
+    }
+
+    return nullptr;
+}

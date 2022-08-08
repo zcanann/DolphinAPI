@@ -121,14 +121,12 @@ struct ToServerParams_OnInstanceMemoryCardFormatted
 
 struct ToServerParams_OnInstanceMemoryRead
 {
-	DolphinDataType _dataType;
-	DolphinValue _dolphinValue;
+	std::vector<unsigned char> _bytes;
 
 	template <class Archive>
 	void serialize(Archive& ar)
 	{
-		ar(_dataType);
-		_dolphinValue.Serialize(ar, _dataType);
+		ar(_bytes);
 	}
 };
 
