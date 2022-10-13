@@ -25,6 +25,7 @@ public:
     bool Init() override;
     void SetTitle(const std::string& string) override;
     void MainLoop() override;
+    u64 GetWindowIdentifier() const override { return (u64)_hwnd; }
 
     WindowSystemInfo GetWindowSystemInfo() const;
     

@@ -24,9 +24,12 @@ enum class DolphinServerIpcCall
 
 struct ToServerParams_OnInstanceConnected
 {
+	unsigned long long _windowIdentifier = 0;
+
 	template <class Archive>
 	void serialize(Archive& ar)
 	{
+		ar(_windowIdentifier);
 	}
 };
 

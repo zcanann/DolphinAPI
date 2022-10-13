@@ -37,6 +37,7 @@ public:
 	bool IsWindowFullscreen() const { return _window_fullscreen; }
 	virtual void SetTitle(const std::string& title);
 	virtual void MainLoop() = 0;
+	virtual u64 GetWindowIdentifier() const { return 0; }
 
 	virtual bool Init();
 

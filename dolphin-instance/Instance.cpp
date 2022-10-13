@@ -91,7 +91,7 @@ bool Instance::Init()
 {
     // Ipc post-connect callback
     CREATE_TO_SERVER_DATA(OnInstanceConnected, ipcData, data)
-    ipcData._call = DolphinServerIpcCall::DolphinServer_OnInstanceConnected;
+    data->_windowIdentifier = GetWindowIdentifier();
     ipcSendToServer(ipcData);
 
     // Ipc post-ready callback
