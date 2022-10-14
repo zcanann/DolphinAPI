@@ -89,25 +89,25 @@ struct ToServerParams_OnInstanceTerminated
 
 struct ToServerParams_OnInstanceRecordingStopped
 {
-	std::vector<DolphinControllerState> _inputStates;
+	DolphinInputRecording _inputRecording;
 
 	template <class Archive>
 	void serialize(Archive& ar)
 	{
-		ar(_inputStates);
+		ar(_inputRecording);
 	}
 };
 
 struct ToServerParams_OnInstanceSaveStateCreated
 {
 	std::string _filePathNoExtension;
-	std::vector<DolphinControllerState> _recordingInputs;
+	DolphinInputRecording _inputRecording;
 
 	template <class Archive>
 	void serialize(Archive& ar)
 	{
 		ar(_filePathNoExtension);
-		ar(_recordingInputs);
+		ar(_inputRecording);
 	}
 };
 

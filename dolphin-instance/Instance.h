@@ -110,8 +110,8 @@ protected:
 	int _framesToAdvance = 0;
 	bool _bootToPause = false;
 	RecordingState _instanceState = RecordingState::None;
-	std::vector<DolphinControllerState> _recordingInputs;
-	std::vector<DolphinControllerState> _playbackInputs;
+	DolphinInputRecording _recordingInputs;
+	DolphinInputRecording _playbackInputs;
 	std::optional<DolphinControllerState> _frameAdvanceInput;
 
 	std::shared_ptr<MockServer> _mockServer;

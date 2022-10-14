@@ -35,5 +35,5 @@ protected:
 	SERVER_FUNC_OVERRIDE(OnInstanceMemoryCardFormatted)
 
 private:
-	DolphinControllerState _mockRecordedInputs;
+	ButtonRunLengthEncoded _mockRecordedInputs;
 };

@@ -89,12 +89,12 @@ struct ToInstanceParams_ResumeEmulation
 
 struct ToInstanceParams_PlayInputs
 {
-	std::vector<DolphinControllerState> _inputStates;
+	DolphinInputRecording _inputRecording;
 
 	template <class Archive>
 	void serialize(Archive& ar)
 	{
-		ar(_inputStates);
+		ar(_inputRecording);
 	}
 };
 

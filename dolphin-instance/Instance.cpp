@@ -63,10 +63,9 @@ void Instance::InitializeLaunchOptions(const InstanceBootParameters& bootParams)
         _mockServer = std::make_shared<MockServer>(bootParams.instanceId);
         recordOnLaunch = true;
 
-        for (int index = 0; index < 800000; index++)
-        {
-            _recordingInputs.push_back(DolphinControllerState());
-        }
+        DolphinInputRecording MockRecording;
+        MockRecording.A.push_back(ButtonRunLengthEncoded(true, 800000));
+        MockRecording.AnalogStickY.push_back(AnalogRunLengthEncoded(255, 800000));
     }
     else
     {
@@ -202,14 +201,13 @@ void Instance::PrepareForTASInput()
             }
             case RecordingState::Playback:
             {
-                if (_playbackInputs.size() <= 0)
+                if (_playbackInputs.HasNext())
                 {
                     // Should never happen
                     return;
                 }
 
-                DolphinControllerState padState = _playbackInputs.front();
-                _playbackInputs.erase(_playbackInputs.begin());
+                DolphinControllerState padState = _playbackInputs.PopNext();
 
                 InstanceUtils::CopyControllerStateToGcPadStatus(padState, padStatus);
 
@@ -231,7 +229,7 @@ void Instance::PrepareForTASInput()
                 }
                 
                 // Inputs complete! Ready for next command
-                if (_playbackInputs.size() <= 0)
+                if (!_playbackInputs.HasNext())
                 {
                     Core::QueueHostJob([=]
                     {
@@ -247,7 +245,7 @@ void Instance::PrepareForTASInput()
             {
                 DolphinControllerState padState;
                 InstanceUtils::CopyGcPadStatusToControllerState(padStatus, padState);
-                _recordingInputs.push_back(padState);
+                _recordingInputs.PushNext(padState);
                 break;
             }
             case RecordingState::None:
@@ -316,14 +314,14 @@ INSTANCE_FUNC_BODY(Instance, ResumeEmulation, params)
 INSTANCE_FUNC_BODY(Instance, PlayInputs, params)
 {
     // These vectors can be masive, use std::move to avoid an extra alloc (should be safe since _inputStates is not used after this)
-    _playbackInputs = std::move(params._inputStates);
+    _playbackInputs = std::move(params._inputRecording);
 
     if (Core::GetState() == Core::State::Paused)
     {
         Core::SetState(Core::State::Running);
     }
 
-    if (_playbackInputs.size() <= 0)
+    if (!_playbackInputs.HasNext())
     {
         OnCommandCompleted(DolphinInstanceIpcCall::DolphinInstance_PlayInputs);
         return;
@@ -380,7 +378,7 @@ INSTANCE_FUNC_BODY(Instance, CreateSaveState, params)
 
     CREATE_TO_SERVER_DATA(OnInstanceSaveStateCreated, ipcData, data)
     data->_filePathNoExtension = params._filePathNoExtension;
-    data->_recordingInputs = _recordingInputs;
+    data->_inputRecording = _recordingInputs;
     ipcSendToServer(ipcData);
 
     OnCommandCompleted(DolphinInstanceIpcCall::DolphinInstance_CreateSaveState);
@@ -516,10 +514,10 @@ void Instance::StopRecording()
     Core::UpdateWantDeterminism(false);
 
     CREATE_TO_SERVER_DATA(OnInstanceRecordingStopped, ipcData, data)
-    data->_inputStates = _recordingInputs;
+    data->_inputRecording = _recordingInputs;
     ipcSendToServer(ipcData);
 
-    _recordingInputs.clear();
+    _recordingInputs.Clear();
 }
 
 void Instance::OnCommandCompleted(DolphinInstanceIpcCall completedCommand)

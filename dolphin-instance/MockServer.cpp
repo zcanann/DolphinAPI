@@ -48,7 +48,7 @@ SERVER_FUNC_BODY(MockServer, OnInstanceTerminated, params)
 
 SERVER_FUNC_BODY(MockServer, OnInstanceRecordingStopped, params)
 {
-    std::cout << "recieved " << params._inputStates.size() << std::endl;
+    std::cout << "recieved inputs" << params._inputRecording.Size() << std::endl;
 }
 
 SERVER_FUNC_BODY(MockServer, OnInstanceSaveStateCreated, params)
