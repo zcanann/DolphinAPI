@@ -6,6 +6,8 @@
 #include <functional>
 #include <numeric>
 
+#pragma optimize("", off)
+
 template <typename T, typename U>
 bool AllEqual(const T& t, const U& u)
 {
@@ -169,7 +171,7 @@ struct DolphinInputRecording
         Result.CStickX = PopNextAnalogState(CStickX);
         Result.CStickY = PopNextAnalogState(CStickY);
 
-        return DolphinControllerState();
+        return Result;
     }
 
     void PushNext(DolphinControllerState InputState)
@@ -213,7 +215,6 @@ struct DolphinInputRecording
         L.clear();
         R.clear();
         Disc.clear();
-        Start.clear();
         Reset.clear();
         IsConnected.clear();
         GetOrigin.clear();
@@ -270,15 +271,15 @@ private:
         }
     }
 
-    void PushAnalogState(std::vector<AnalogRunLengthEncoded>& buttonInputs, unsigned char value)
+    void PushAnalogState(std::vector<AnalogRunLengthEncoded>& analogInputs, unsigned char value)
     {
-        if (buttonInputs.empty() || buttonInputs.back().Value != value)
+        if (analogInputs.empty() || analogInputs.back().Value != value)
         {
-            buttonInputs.push_back(AnalogRunLengthEncoded(value, 1));
+            analogInputs.push_back(AnalogRunLengthEncoded(value, 1));
         }
         else
         {
-            buttonInputs.back().Length++;
+            analogInputs.back().Length++;
         }
     }
 
@@ -291,7 +292,9 @@ private:
 
         bool input = buttonInputs.begin()->Pressed;
 
-        if (buttonInputs.begin()->Length == 0)
+        buttonInputs.begin()->Length--;
+
+        if (buttonInputs.begin()->Length <= 0)
         {
             buttonInputs.erase(buttonInputs.begin());
         }
@@ -308,7 +311,9 @@ private:
 
         unsigned char input = analogInputs.begin()->Value;
 
-        if (analogInputs.begin()->Length == 0)
+        analogInputs.begin()->Length--;
+
+        if (analogInputs.begin()->Length <= 0)
         {
             analogInputs.erase(analogInputs.begin());
         }
@@ -326,3 +331,5 @@ private:
         return std::accumulate(analogInputs.begin(), analogInputs.end(), 0, [](int sum, const AnalogRunLengthEncoded& curr) { return sum + curr.Length; });
     }
 };
+
+#pragma optimize("", on)

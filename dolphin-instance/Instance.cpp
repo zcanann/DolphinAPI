@@ -88,10 +88,8 @@ void Instance::SetTitle(const std::string& title)
 
 bool Instance::Init()
 {
-    // Ipc post-connect callback
-    CREATE_TO_SERVER_DATA(OnInstanceConnected, ipcData, data)
-    data->_windowIdentifier = GetWindowIdentifier();
-    ipcSendToServer(ipcData);
+    InitControllers();
+    PrepareForTASInput();
 
     // Ipc post-ready callback
     _coreStateEventHandle = Core::AddOnStateChangedCallback([this](Core::State state)
@@ -108,8 +106,10 @@ bool Instance::Init()
         }
     });
 
-    InitControllers();
-    PrepareForTASInput();
+    // Ipc post-connect callback
+    CREATE_TO_SERVER_DATA(OnInstanceConnected, ipcData, data)
+    data->_windowIdentifier = GetWindowIdentifier();
+    ipcSendToServer(ipcData);
 
     return true;
 }
@@ -140,8 +140,9 @@ void Instance::ShutdownControllers()
 
 void Instance::PrepareForTASInput()
 {
+    // This tool is expected to be used for TASing, so we can just set this to true always
+    Core::UpdateWantDeterminism(true);
     Wiimote::ResetAllWiimotes();
-    Core::UpdateWantDeterminism();
     Movie::SetReadOnly(false);
 
     for (int controllerIndex = 0; controllerIndex < SerialInterface::MAX_SI_CHANNELS; controllerIndex++)
@@ -163,13 +164,18 @@ void Instance::PrepareForTASInput()
 
     Movie::SetGCInputManip([this](GCPadStatus* padStatus, int controllerId)
     {
+        if (controllerId != 0)
+        {
+            return;
+        }
+
         switch (_instanceState)
         {
             case RecordingState::FrameAdvancing:
             {
                 if (_framesToAdvance <= 0)
                 {
-                    // Should never happen
+                    Instance::Log(Common::Log::LogLevel::LERROR, "Unexpected end of frames to advance");
                     return;
                 }
 
@@ -201,9 +207,9 @@ void Instance::PrepareForTASInput()
             }
             case RecordingState::Playback:
             {
-                if (_playbackInputs.HasNext())
+                if (!_playbackInputs.HasNext())
                 {
-                    // Should never happen
+                    Instance::Log(Common::Log::LogLevel::LERROR, "Unexpected end of playback input");
                     return;
                 }
 
@@ -233,7 +239,6 @@ void Instance::PrepareForTASInput()
                 {
                     Core::QueueHostJob([=]
                     {
-                        Core::UpdateWantDeterminism(false);
                         Core::SetState(Core::State::Paused);
                     });
                     _instanceState = RecordingState::None;
@@ -328,8 +333,6 @@ INSTANCE_FUNC_BODY(Instance, PlayInputs, params)
     }
 
     _instanceState = RecordingState::Playback;
-    // Send the initial flag to force determinism, since internally this checks Movie class flags which this class does not set
-    Core::UpdateWantDeterminism(true);
 }
 
 INSTANCE_FUNC_BODY(Instance, FrameAdvance, params)
@@ -341,7 +344,6 @@ INSTANCE_FUNC_BODY(Instance, FrameAdvance, params)
     {
         Core::SetState(Core::State::Running);
     }
-    Core::UpdateWantDeterminism(true);
 }
 
 INSTANCE_FUNC_BODY(Instance, FrameAdvanceWithInput, params)
@@ -354,7 +356,6 @@ INSTANCE_FUNC_BODY(Instance, FrameAdvanceWithInput, params)
     {
         Core::SetState(Core::State::Running);
     }
-    Core::UpdateWantDeterminism(true);
 }
 
 INSTANCE_FUNC_BODY(Instance, CreateSaveState, params)
@@ -500,7 +501,6 @@ void Instance::StartRecording()
     }
 
     _instanceState = RecordingState::Recording;
-    Core::UpdateWantDeterminism(true);
 }
 
 void Instance::StopRecording()
@@ -511,7 +511,6 @@ void Instance::StopRecording()
     }
 
     _instanceState = RecordingState::None;
-    Core::UpdateWantDeterminism(false);
 
     CREATE_TO_SERVER_DATA(OnInstanceRecordingStopped, ipcData, data)
     data->_inputRecording = _recordingInputs;
