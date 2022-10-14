@@ -89,12 +89,15 @@ struct ToInstanceParams_ResumeEmulation
 
 struct ToInstanceParams_PlayInputs
 {
-	DolphinInputRecording _inputRecording;
+	DolphinInputRecording _inputRecording[4];
 
 	template <class Archive>
 	void serialize(Archive& ar)
 	{
-		ar(_inputRecording);
+		ar(_inputRecording[0]);
+		ar(_inputRecording[1]);
+		ar(_inputRecording[2]);
+		ar(_inputRecording[3]);
 	}
 };
 
@@ -112,13 +115,16 @@ struct ToInstanceParams_FrameAdvance
 struct ToInstanceParams_FrameAdvanceWithInput
 {
 	int _numFrames = 1;
-	DolphinControllerState _inputState;
+	DolphinControllerState _inputState[4];
 
 	template <class Archive>
 	void serialize(Archive& ar)
 	{
 		ar(_numFrames);
-		ar(_inputState);
+		ar(_inputState[0]);
+		ar(_inputState[1]);
+		ar(_inputState[2]);
+		ar(_inputState[3]);
 	}
 };
 

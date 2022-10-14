@@ -39,8 +39,6 @@
 #include "InputCommon/InputConfig.h"
 #include "VideoCommon/VideoConfig.h"
 
-#pragma optimize("", off)
-
 Instance::Instance(const InstanceBootParameters& bootParams)
 {
     initializeChannels(bootParams.instanceId, true);
@@ -164,9 +162,9 @@ void Instance::PrepareForTASInput()
 
     Movie::SetGCInputManip([this](GCPadStatus* padStatus, int controllerId)
     {
-        if (controllerId != 0)
+        if (controllerId < 0 || controllerId > 3)
         {
-            return;
+            Log(Common::Log::LogLevel::LERROR, "Unexpected controller id");
         }
 
         switch (_instanceState)
@@ -175,13 +173,13 @@ void Instance::PrepareForTASInput()
             {
                 if (_framesToAdvance <= 0)
                 {
-                    Instance::Log(Common::Log::LogLevel::LERROR, "Unexpected end of frames to advance");
+                    Log(Common::Log::LogLevel::LERROR, "Unexpected end of frames to advance");
                     return;
                 }
 
-                if (_frameAdvanceInput.has_value())
+                if (_frameAdvanceInput[controllerId].has_value())
                 {
-                    InstanceUtils::CopyControllerStateToGcPadStatus(*_frameAdvanceInput, padStatus);
+                    InstanceUtils::CopyControllerStateToGcPadStatus(*_frameAdvanceInput[controllerId], padStatus);
                 }
 
                 if (--_framesToAdvance <= 0)
@@ -193,9 +191,9 @@ void Instance::PrepareForTASInput()
                         Core::SetState(Core::State::Paused);
                     });
 
-                    if (_frameAdvanceInput.has_value())
+                    if (_frameAdvanceInput[controllerId].has_value())
                     {
-                        _frameAdvanceInput.reset();
+                        _frameAdvanceInput[controllerId].reset();
                         OnCommandCompleted(DolphinInstanceIpcCall::DolphinInstance_FrameAdvanceWithInput);
                     }
                     else
@@ -207,26 +205,26 @@ void Instance::PrepareForTASInput()
             }
             case RecordingState::Playback:
             {
-                if (!_playbackInputs.HasNext())
+                if (!_playbackInputs[controllerId].HasNext())
                 {
-                    Instance::Log(Common::Log::LogLevel::LERROR, "Unexpected end of playback input");
+                    Log(Common::Log::LogLevel::LERROR, "Unexpected end of playback input");
                     return;
                 }
 
-                DolphinControllerState padState = _playbackInputs.PopNext();
+                DolphinControllerState padState = _playbackInputs[controllerId].PopNext();
 
                 InstanceUtils::CopyControllerStateToGcPadStatus(padState, padStatus);
 
                 if (padState.Disc)
                 {
-                    Core::RunAsCPUThread([]
+                    Core::RunAsCPUThread([=]
+                    {
+                        if (!DVDInterface::AutoChangeDisc())
                         {
-                            if (!DVDInterface::AutoChangeDisc())
-                            {
-                                CPU::Break();
-                                // PanicAlertFmtT("Change the disc to {0}", s_discChange);
-                            }
-                        });
+                            CPU::Break();
+                            Log(Common::Log::LogLevel::LWARNING, "Disc change"); // PanicAlertFmtT("Change the disc to {0}", s_discChange);
+                        }
+                    });
                 }
 
                 if (padState.Reset)
@@ -235,7 +233,7 @@ void Instance::PrepareForTASInput()
                 }
                 
                 // Inputs complete! Ready for next command
-                if (!_playbackInputs.HasNext())
+                if (!_playbackInputs[controllerId].HasNext())
                 {
                     Core::QueueHostJob([=]
                     {
@@ -250,7 +248,7 @@ void Instance::PrepareForTASInput()
             {
                 DolphinControllerState padState;
                 InstanceUtils::CopyGcPadStatusToControllerState(padStatus, padState);
-                _recordingInputs.PushNext(padState);
+                _recordingInputs[controllerId].PushNext(padState);
                 break;
             }
             case RecordingState::None:
@@ -319,14 +317,20 @@ INSTANCE_FUNC_BODY(Instance, ResumeEmulation, params)
 INSTANCE_FUNC_BODY(Instance, PlayInputs, params)
 {
     // These vectors can be masive, use std::move to avoid an extra alloc (should be safe since _inputStates is not used after this)
-    _playbackInputs = std::move(params._inputRecording);
+    _playbackInputs[0] = std::move(params._inputRecording[0]);
+    _playbackInputs[1] = std::move(params._inputRecording[1]);
+    _playbackInputs[2] = std::move(params._inputRecording[2]);
+    _playbackInputs[3] = std::move(params._inputRecording[3]);
 
     if (Core::GetState() == Core::State::Paused)
     {
         Core::SetState(Core::State::Running);
     }
 
-    if (!_playbackInputs.HasNext())
+    if (!_playbackInputs[0].HasNext()
+        && !_playbackInputs[1].HasNext()
+        && !_playbackInputs[2].HasNext()
+        && !_playbackInputs[3].HasNext())
     {
         OnCommandCompleted(DolphinInstanceIpcCall::DolphinInstance_PlayInputs);
         return;
@@ -350,7 +354,10 @@ INSTANCE_FUNC_BODY(Instance, FrameAdvanceWithInput, params)
 {
     _framesToAdvance = params._numFrames;
     _instanceState = RecordingState::FrameAdvancing;
-    _frameAdvanceInput = params._inputState;
+    _frameAdvanceInput[0] = params._inputState[0];
+    _frameAdvanceInput[1] = params._inputState[1];
+    _frameAdvanceInput[2] = params._inputState[2];
+    _frameAdvanceInput[3] = params._inputState[3];
 
     if (Core::GetState() == Core::State::Paused)
     {
@@ -379,7 +386,10 @@ INSTANCE_FUNC_BODY(Instance, CreateSaveState, params)
 
     CREATE_TO_SERVER_DATA(OnInstanceSaveStateCreated, ipcData, data)
     data->_filePathNoExtension = params._filePathNoExtension;
-    data->_inputRecording = _recordingInputs;
+    data->_inputRecording[0] = _recordingInputs[0];
+    data->_inputRecording[1] = _recordingInputs[1];
+    data->_inputRecording[2] = _recordingInputs[2];
+    data->_inputRecording[3] = _recordingInputs[3];
     ipcSendToServer(ipcData);
 
     OnCommandCompleted(DolphinInstanceIpcCall::DolphinInstance_CreateSaveState);
@@ -513,10 +523,16 @@ void Instance::StopRecording()
     _instanceState = RecordingState::None;
 
     CREATE_TO_SERVER_DATA(OnInstanceRecordingStopped, ipcData, data)
-    data->_inputRecording = _recordingInputs;
+    data->_inputRecording[0] = _recordingInputs[0];
+    data->_inputRecording[1] = _recordingInputs[1];
+    data->_inputRecording[2] = _recordingInputs[2];
+    data->_inputRecording[3] = _recordingInputs[3];
     ipcSendToServer(ipcData);
 
-    _recordingInputs.Clear();
+    _recordingInputs[0].Clear();
+    _recordingInputs[1].Clear();
+    _recordingInputs[2].Clear();
+    _recordingInputs[3].Clear();
 }
 
 void Instance::OnCommandCompleted(DolphinInstanceIpcCall completedCommand)
@@ -547,5 +563,3 @@ void Instance::RequestShutdown()
 {
     _shutdown_requested.Set();
 }
-
-#pragma optimize("", on)

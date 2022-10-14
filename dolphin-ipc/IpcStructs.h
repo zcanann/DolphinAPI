@@ -6,8 +6,6 @@
 #include <functional>
 #include <numeric>
 
-#pragma optimize("", off)
-
 template <typename T, typename U>
 bool AllEqual(const T& t, const U& u)
 {
@@ -331,5 +329,3 @@ private:
         return std::accumulate(analogInputs.begin(), analogInputs.end(), 0, [](int sum, const AnalogRunLengthEncoded& curr) { return sum + curr.Length; });
     }
 };
-
-#pragma optimize("", on)

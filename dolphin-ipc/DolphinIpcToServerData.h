@@ -89,25 +89,31 @@ struct ToServerParams_OnInstanceTerminated
 
 struct ToServerParams_OnInstanceRecordingStopped
 {
-	DolphinInputRecording _inputRecording;
+	DolphinInputRecording _inputRecording[4];
 
 	template <class Archive>
 	void serialize(Archive& ar)
 	{
-		ar(_inputRecording);
+		ar(_inputRecording[0]);
+		ar(_inputRecording[1]);
+		ar(_inputRecording[2]);
+		ar(_inputRecording[3]);
 	}
 };
 
 struct ToServerParams_OnInstanceSaveStateCreated
 {
 	std::string _filePathNoExtension;
-	DolphinInputRecording _inputRecording;
+	DolphinInputRecording _inputRecording[4];
 
 	template <class Archive>
 	void serialize(Archive& ar)
 	{
 		ar(_filePathNoExtension);
-		ar(_inputRecording);
+		ar(_inputRecording[0]);
+		ar(_inputRecording[1]);
+		ar(_inputRecording[2]);
+		ar(_inputRecording[3]);
 	}
 };
 
