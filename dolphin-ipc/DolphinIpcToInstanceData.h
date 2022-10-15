@@ -3,7 +3,10 @@
 
 #include "IpcStructs.h"
 
+// Prevent errors in cereal that propagate to Unreal where __GNUC__ is not defined
+#define __GNUC__ (false)
 #include "external/cereal/cereal.hpp"
+#undef __GNUC__
 
 #include <string>
 
@@ -19,7 +22,7 @@ enum class DolphinInstanceIpcCall
 	DolphinInstance_ResumeEmulation,
 	DolphinInstance_PlayInputs,
 	DolphinInstance_FrameAdvance,
-	DolphinInstance_FrameAdvanceWithInput,
+	DolphinInstance_SetTasInput,
 	DolphinInstance_CreateSaveState,
 	DolphinInstance_LoadSaveState,
 	DolphinInstance_FormatMemoryCard,
@@ -41,9 +44,12 @@ struct ToInstanceParams_Connect
 
 struct ToInstanceParams_Heartbeat
 {
+	bool _shouldUseHardwareController = true;
+
 	template <class Archive>
 	void serialize(Archive& ar)
 	{
+		ar(_shouldUseHardwareController);
 	}
 };
 
@@ -120,19 +126,17 @@ struct ToInstanceParams_FrameAdvance
 	}
 };
 
-struct ToInstanceParams_FrameAdvanceWithInput
+struct ToInstanceParams_SetTasInput
 {
-	int _numFrames = 1;
-	DolphinControllerState _inputState[4];
+	DolphinControllerState _tasInputStates[4];
 
 	template <class Archive>
 	void serialize(Archive& ar)
 	{
-		ar(_numFrames);
-		ar(_inputState[0]);
-		ar(_inputState[1]);
-		ar(_inputState[2]);
-		ar(_inputState[3]);
+		ar(_tasInputStates[0]);
+		ar(_tasInputStates[1]);
+		ar(_tasInputStates[2]);
+		ar(_tasInputStates[3]);
 	}
 };
 
@@ -233,7 +237,7 @@ union DolphinIpcToInstanceDataParams
 	TO_INSTANCE_MEMBER(ResumeEmulation)
 	TO_INSTANCE_MEMBER(PlayInputs)
 	TO_INSTANCE_MEMBER(FrameAdvance)
-	TO_INSTANCE_MEMBER(FrameAdvanceWithInput)
+	TO_INSTANCE_MEMBER(SetTasInput)
 	TO_INSTANCE_MEMBER(CreateSaveState)
 	TO_INSTANCE_MEMBER(LoadSaveState)
 	TO_INSTANCE_MEMBER(FormatMemoryCard)
@@ -270,7 +274,7 @@ struct DolphinIpcToInstanceData
 			TO_INSTANCE_ARCHIVE(ResumeEmulation)
 			TO_INSTANCE_ARCHIVE(PlayInputs)
 			TO_INSTANCE_ARCHIVE(FrameAdvance)
-			TO_INSTANCE_ARCHIVE(FrameAdvanceWithInput)
+			TO_INSTANCE_ARCHIVE(SetTasInput)
 			TO_INSTANCE_ARCHIVE(CreateSaveState)
 			TO_INSTANCE_ARCHIVE(LoadSaveState)
 			TO_INSTANCE_ARCHIVE(FormatMemoryCard)

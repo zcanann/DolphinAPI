@@ -1,7 +1,10 @@
 #pragma once
 
+// Prevent errors in cereal that propagate to Unreal where __GNUC__ is not defined
+#define __GNUC__ (false)
 #include "external/cereal/cereal.hpp"
 #include "external/cereal/types/vector.hpp"
+#undef __GNUC__
 
 #include <functional>
 #include <numeric>

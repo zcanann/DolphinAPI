@@ -76,7 +76,7 @@ protected:
 	INSTANCE_FUNC_OVERRIDE(ResumeEmulation)
 	INSTANCE_FUNC_OVERRIDE(PlayInputs)
 	INSTANCE_FUNC_OVERRIDE(FrameAdvance)
-	INSTANCE_FUNC_OVERRIDE(FrameAdvanceWithInput)
+	INSTANCE_FUNC_OVERRIDE(SetTasInput)
 	INSTANCE_FUNC_OVERRIDE(CreateSaveState)
 	INSTANCE_FUNC_OVERRIDE(LoadSaveState)
 	INSTANCE_FUNC_OVERRIDE(FormatMemoryCard)
@@ -108,13 +108,14 @@ protected:
 	int _coreStateEventHandle = -1;
 	int _framesToAdvance = 0;
 	bool _bootToPause = false;
+	bool _shouldUseHardwareController = true;
 	RecordingState _instanceState = RecordingState::None;
 
 	bool _isRecordingController[4] = { true, false, false, false };
 	DolphinInputRecording _recordingInputs[4];
 	DolphinInputRecording _playbackInputs[4];
-	DolphinControllerState _currentInputStates[4];
-	std::optional<DolphinControllerState> _frameAdvanceInput[4];
+	DolphinControllerState _hardwareInputStates[4];
+	DolphinControllerState _tasInputStates[4];
 
 	std::shared_ptr<MockServer> _mockServer;
 };

@@ -160,6 +160,11 @@ void Instance::PrepareForTASInput()
     // TODO: Potentially enable this if we want to support dumping DTM files
     // Movie::BeginRecordingInput(controllers, wiimotes);*/
 
+    Movie::SetWiiInputManip([this](WiimoteCommon::DataReportBuilder& rpt, int controllerId, int ext, const WiimoteEmu::EncryptionKey& key)
+    {
+
+    });
+
     Movie::SetGCInputManip([this](GCPadStatus* padStatus, int controllerId)
     {
         if (controllerId < 0 || controllerId > 3)
@@ -167,14 +172,13 @@ void Instance::PrepareForTASInput()
             Log(Common::Log::LogLevel::LERROR, "Unexpected controller id");
         }
 
-        InstanceUtils::CopyGcPadStatusToControllerState(padStatus, _currentInputStates[controllerId]);
-
         // Perform frame advance
         if (_framesToAdvance > 0)
         {
-            if (_frameAdvanceInput[controllerId].has_value())
+            if (!_shouldUseHardwareController)
             {
-                InstanceUtils::CopyControllerStateToGcPadStatus(*_frameAdvanceInput[controllerId], padStatus);
+                // Replace hardware input with TAS input
+                InstanceUtils::CopyControllerStateToGcPadStatus(_tasInputStates[controllerId], padStatus);
             }
 
             if (--_framesToAdvance <= 0)
@@ -184,17 +188,12 @@ void Instance::PrepareForTASInput()
                     Core::SetState(Core::State::Paused);
                 });
 
-                if (_frameAdvanceInput[controllerId].has_value())
-                {
-                    _frameAdvanceInput[controllerId].reset();
-                    OnCommandCompleted(DolphinInstanceIpcCall::DolphinInstance_FrameAdvanceWithInput);
-                }
-                else
-                {
-                    OnCommandCompleted(DolphinInstanceIpcCall::DolphinInstance_FrameAdvance);
-                }
+                OnCommandCompleted(DolphinInstanceIpcCall::DolphinInstance_FrameAdvance);
             }
         }
+
+        // Update stored hardware input states
+        InstanceUtils::CopyGcPadStatusToControllerState(padStatus, _hardwareInputStates[controllerId]);
 
         // Record or playback
         switch (_instanceState)
@@ -244,7 +243,7 @@ void Instance::PrepareForTASInput()
             {
                 if (_isRecordingController[controllerId])
                 {
-                    _recordingInputs[controllerId].PushNext(_currentInputStates[controllerId]);
+                    _recordingInputs[controllerId].PushNext(_hardwareInputStates[controllerId]);
                 }
                 break;
             }
@@ -264,15 +263,16 @@ INSTANCE_FUNC_BODY(Instance, Connect, params)
 INSTANCE_FUNC_BODY(Instance, Heartbeat, params)
 {
     _lastHeartbeat = std::chrono::system_clock::now();
+    _shouldUseHardwareController = params._shouldUseHardwareController;
 
     // Acknowledge heartbeat, sending over any state data the server may want.
     CREATE_TO_SERVER_DATA(OnInstanceHeartbeatAcknowledged, ipcData, data)
     data->_isRecording = _instanceState == RecordingState::Recording;
     data->_isPaused = Core::GetState() == Core::State::Paused;
-    data->_currentInputStates[0] = _currentInputStates[0];
-    data->_currentInputStates[1] = _currentInputStates[1];
-    data->_currentInputStates[2] = _currentInputStates[2];
-    data->_currentInputStates[3] = _currentInputStates[3];
+    data->_hardwareInputStates[0] = _hardwareInputStates[0];
+    data->_hardwareInputStates[1] = _hardwareInputStates[1];
+    data->_hardwareInputStates[2] = _hardwareInputStates[2];
+    data->_hardwareInputStates[3] = _hardwareInputStates[3];
     ipcSendToServer(ipcData);
 }
 
@@ -364,18 +364,12 @@ INSTANCE_FUNC_BODY(Instance, FrameAdvance, params)
     }
 }
 
-INSTANCE_FUNC_BODY(Instance, FrameAdvanceWithInput, params)
+INSTANCE_FUNC_BODY(Instance, SetTasInput, params)
 {
-    _framesToAdvance = params._numFrames;
-    _frameAdvanceInput[0] = params._inputState[0];
-    _frameAdvanceInput[1] = params._inputState[1];
-    _frameAdvanceInput[2] = params._inputState[2];
-    _frameAdvanceInput[3] = params._inputState[3];
-
-    if (Core::GetState() == Core::State::Paused)
-    {
-        Core::SetState(Core::State::Running);
-    }
+    _tasInputStates[0] = params._tasInputStates[0];
+    _tasInputStates[1] = params._tasInputStates[1];
+    _tasInputStates[2] = params._tasInputStates[2];
+    _tasInputStates[3] = params._tasInputStates[3];
 }
 
 INSTANCE_FUNC_BODY(Instance, CreateSaveState, params)

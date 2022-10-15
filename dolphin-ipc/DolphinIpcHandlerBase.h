@@ -56,7 +56,7 @@ protected:
 	INSTANCE_FUNC(ResumeEmulation)
 	INSTANCE_FUNC(PlayInputs)
 	INSTANCE_FUNC(FrameAdvance)
-	INSTANCE_FUNC(FrameAdvanceWithInput)
+	INSTANCE_FUNC(SetTasInput)
 	INSTANCE_FUNC(CreateSaveState)
 	INSTANCE_FUNC(LoadSaveState)
 	INSTANCE_FUNC(FormatMemoryCard)

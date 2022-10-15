@@ -3,7 +3,10 @@
 
 #include "IpcStructs.h"
 
+// Prevent errors in cereal that propagate to Unreal where __GNUC__ is not defined
+#define __GNUC__ (false)
 #include "external/cereal/cereal.hpp"
+#undef __GNUC__
 
 #include <string>
 
@@ -48,17 +51,17 @@ struct ToServerParams_OnInstanceHeartbeatAcknowledged
 {
 	bool _isRecording = false;
 	bool _isPaused = false;
-	DolphinControllerState _currentInputStates[4];
+	DolphinControllerState _hardwareInputStates[4];
 
 	template <class Archive>
 	void serialize(Archive& ar)
 	{
 		ar(_isRecording);
 		ar(_isPaused);
-		ar(_currentInputStates[0]);
-		ar(_currentInputStates[1]);
-		ar(_currentInputStates[2]);
-		ar(_currentInputStates[3]);
+		ar(_hardwareInputStates[0]);
+		ar(_hardwareInputStates[1]);
+		ar(_hardwareInputStates[2]);
+		ar(_hardwareInputStates[3]);
 	}
 };
 

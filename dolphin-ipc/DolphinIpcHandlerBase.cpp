@@ -2,7 +2,6 @@
 
 // Prevent errors in cereal that propagate to Unreal where __GNUC__ is not defined
 #define __GNUC__ (false)
-
 #include "cereal/cereal.hpp"
 #include "cereal/access.hpp"
 #include "cereal/types/common.hpp"
@@ -11,7 +10,6 @@
 #include "cereal/types/vector.hpp"
 #include "cereal/types/memory.hpp"
 #include "cereal/archives/binary.hpp"
-
 #undef __GNUC__
 
 const std::string DolphinIpcHandlerBase::ChannelNameInstanceToServerBase = "dol-i2s-";
@@ -160,7 +158,7 @@ void DolphinIpcHandlerBase::onServerToInstanceDataReceived(const DolphinIpcToIns
         INSTANCE_DISPATCH(ResumeEmulation)
         INSTANCE_DISPATCH(PlayInputs)
         INSTANCE_DISPATCH(FrameAdvance)
-        INSTANCE_DISPATCH(FrameAdvanceWithInput)
+        INSTANCE_DISPATCH(SetTasInput)
         INSTANCE_DISPATCH(CreateSaveState)
         INSTANCE_DISPATCH(LoadSaveState)
         INSTANCE_DISPATCH(FormatMemoryCard)
