@@ -167,6 +167,8 @@ void Instance::PrepareForTASInput()
             Log(Common::Log::LogLevel::LERROR, "Unexpected controller id");
         }
 
+        InstanceUtils::CopyGcPadStatusToControllerState(padStatus, _currentInputStates[controllerId]);
+
         switch (_instanceState)
         {
             case RecordingState::FrameAdvancing:
@@ -246,9 +248,10 @@ void Instance::PrepareForTASInput()
             }
             case RecordingState::Recording:
             {
-                DolphinControllerState padState;
-                InstanceUtils::CopyGcPadStatusToControllerState(padStatus, padState);
-                _recordingInputs[controllerId].PushNext(padState);
+                if (_isRecordingController[controllerId])
+                {
+                    _recordingInputs[controllerId].PushNext(_currentInputStates[controllerId]);
+                }
                 break;
             }
             case RecordingState::None:
@@ -272,6 +275,10 @@ INSTANCE_FUNC_BODY(Instance, Heartbeat, params)
     CREATE_TO_SERVER_DATA(OnInstanceHeartbeatAcknowledged, ipcData, data)
     data->_isRecording = _instanceState == RecordingState::Recording;
     data->_isPaused = Core::GetState() == Core::State::Paused;
+    data->_currentInputStates[0] = _currentInputStates[0];
+    data->_currentInputStates[1] = _currentInputStates[1];
+    data->_currentInputStates[2] = _currentInputStates[2];
+    data->_currentInputStates[3] = _currentInputStates[3];
     ipcSendToServer(ipcData);
 }
 
@@ -285,6 +292,21 @@ INSTANCE_FUNC_BODY(Instance, StartRecordingInput, params)
 {
     StopRecording();
     StartRecording();
+
+    if (params._unpauseInstance)
+    {
+        if (Core::GetState() == Core::State::Paused)
+        {
+            Core::SetState(Core::State::Running);
+        }
+    }
+
+    _isRecordingController[0] = params._recordControllers[0];
+    _isRecordingController[1] = params._recordControllers[1];
+    _isRecordingController[2] = params._recordControllers[2];
+    _isRecordingController[3] = params._recordControllers[3];
+    
+
     OnCommandCompleted(DolphinInstanceIpcCall::DolphinInstance_StartRecordingInput);
 }
 

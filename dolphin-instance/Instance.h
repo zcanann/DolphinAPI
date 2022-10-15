@@ -110,8 +110,11 @@ protected:
 	int _framesToAdvance = 0;
 	bool _bootToPause = false;
 	RecordingState _instanceState = RecordingState::None;
+
+	bool _isRecordingController[4] = { true, false, false, false };
 	DolphinInputRecording _recordingInputs[4];
 	DolphinInputRecording _playbackInputs[4];
+	DolphinControllerState _currentInputStates[4];
 	std::optional<DolphinControllerState> _frameAdvanceInput[4];
 
 	std::shared_ptr<MockServer> _mockServer;

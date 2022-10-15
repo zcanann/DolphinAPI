@@ -57,6 +57,9 @@ struct ToInstanceParams_Terminate
 
 struct ToInstanceParams_StartRecordingInput
 {
+	bool _unpauseInstance = true;
+	bool _recordControllers[4] = { true, false, false, false };
+
 	template <class Archive>
 	void serialize(Archive& ar)
 	{
