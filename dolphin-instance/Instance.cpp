@@ -148,6 +148,7 @@ void Instance::PrepareForTASInput()
         Config::SetBaseOrCurrent(Config::GetInfoForSIDevice(static_cast<int>(controllerIndex)), SerialInterface::SIDevices::SIDEVICE_GC_CONTROLLER);
         SerialInterface::ChangeDevice(SerialInterface::SIDevices::SIDEVICE_GC_CONTROLLER, controllerIndex);
     }
+
     if (GCAdapter::UseAdapter())
     {
         GCAdapter::StartScanThread();
