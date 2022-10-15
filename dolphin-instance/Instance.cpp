@@ -169,42 +169,36 @@ void Instance::PrepareForTASInput()
 
         InstanceUtils::CopyGcPadStatusToControllerState(padStatus, _currentInputStates[controllerId]);
 
-        switch (_instanceState)
+        // Perform frame advance
+        if (_framesToAdvance > 0)
         {
-            case RecordingState::FrameAdvancing:
+            if (_frameAdvanceInput[controllerId].has_value())
             {
-                if (_framesToAdvance <= 0)
+                InstanceUtils::CopyControllerStateToGcPadStatus(*_frameAdvanceInput[controllerId], padStatus);
+            }
+
+            if (--_framesToAdvance <= 0)
+            {
+                Core::QueueHostJob([=]
                 {
-                    Log(Common::Log::LogLevel::LERROR, "Unexpected end of frames to advance");
-                    return;
-                }
+                    Core::SetState(Core::State::Paused);
+                });
 
                 if (_frameAdvanceInput[controllerId].has_value())
                 {
-                    InstanceUtils::CopyControllerStateToGcPadStatus(*_frameAdvanceInput[controllerId], padStatus);
+                    _frameAdvanceInput[controllerId].reset();
+                    OnCommandCompleted(DolphinInstanceIpcCall::DolphinInstance_FrameAdvanceWithInput);
                 }
-
-                if (--_framesToAdvance <= 0)
+                else
                 {
-                    _instanceState = RecordingState::None;
-
-                    Core::QueueHostJob([=]
-                    {
-                        Core::SetState(Core::State::Paused);
-                    });
-
-                    if (_frameAdvanceInput[controllerId].has_value())
-                    {
-                        _frameAdvanceInput[controllerId].reset();
-                        OnCommandCompleted(DolphinInstanceIpcCall::DolphinInstance_FrameAdvanceWithInput);
-                    }
-                    else
-                    {
-                        OnCommandCompleted(DolphinInstanceIpcCall::DolphinInstance_FrameAdvance);
-                    }
+                    OnCommandCompleted(DolphinInstanceIpcCall::DolphinInstance_FrameAdvance);
                 }
-                break;
             }
+        }
+
+        // Record or playback
+        switch (_instanceState)
+        {
             case RecordingState::Playback:
             {
                 if (!_playbackInputs[controllerId].HasNext())
@@ -293,6 +287,11 @@ INSTANCE_FUNC_BODY(Instance, StartRecordingInput, params)
     StopRecording();
     StartRecording();
 
+    _isRecordingController[0] = params._recordControllers[0];
+    _isRecordingController[1] = params._recordControllers[1];
+    _isRecordingController[2] = params._recordControllers[2];
+    _isRecordingController[3] = params._recordControllers[3];
+
     if (params._unpauseInstance)
     {
         if (Core::GetState() == Core::State::Paused)
@@ -300,12 +299,6 @@ INSTANCE_FUNC_BODY(Instance, StartRecordingInput, params)
             Core::SetState(Core::State::Running);
         }
     }
-
-    _isRecordingController[0] = params._recordControllers[0];
-    _isRecordingController[1] = params._recordControllers[1];
-    _isRecordingController[2] = params._recordControllers[2];
-    _isRecordingController[3] = params._recordControllers[3];
-    
 
     OnCommandCompleted(DolphinInstanceIpcCall::DolphinInstance_StartRecordingInput);
 }
@@ -364,7 +357,6 @@ INSTANCE_FUNC_BODY(Instance, PlayInputs, params)
 INSTANCE_FUNC_BODY(Instance, FrameAdvance, params)
 {
     _framesToAdvance = params._numFrames;
-    _instanceState = RecordingState::FrameAdvancing;
 
     if (Core::GetState() == Core::State::Paused)
     {
@@ -375,7 +367,6 @@ INSTANCE_FUNC_BODY(Instance, FrameAdvance, params)
 INSTANCE_FUNC_BODY(Instance, FrameAdvanceWithInput, params)
 {
     _framesToAdvance = params._numFrames;
-    _instanceState = RecordingState::FrameAdvancing;
     _frameAdvanceInput[0] = params._inputState[0];
     _frameAdvanceInput[1] = params._inputState[1];
     _frameAdvanceInput[2] = params._inputState[2];

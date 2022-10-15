@@ -103,7 +103,6 @@ protected:
 		None,
 		Recording,
 		Playback,
-		FrameAdvancing,
 	};
 
 	int _coreStateEventHandle = -1;

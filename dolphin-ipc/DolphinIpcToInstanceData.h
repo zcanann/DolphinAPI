@@ -63,6 +63,11 @@ struct ToInstanceParams_StartRecordingInput
 	template <class Archive>
 	void serialize(Archive& ar)
 	{
+		ar(_unpauseInstance);
+		ar(_recordControllers[0]);
+		ar(_recordControllers[1]);
+		ar(_recordControllers[2]);
+		ar(_recordControllers[3]);
 	}
 };
 
