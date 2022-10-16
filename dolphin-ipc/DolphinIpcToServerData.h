@@ -161,6 +161,7 @@ struct ToServerParams_OnInstanceMemoryWrite
 
 struct ToServerParams_OnInstanceRenderGba
 {
+	int _controllerIndex = 0;
 	int _width = 0;
 	int _height = 0;
 	std::vector<unsigned int> _frameBuffer;
@@ -168,6 +169,7 @@ struct ToServerParams_OnInstanceRenderGba
 	template <class Archive>
 	void serialize(Archive& ar)
 	{
+		ar(_controllerIndex);
 		ar(_width);
 		ar(_height);
 		ar(_frameBuffer);

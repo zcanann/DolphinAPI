@@ -45,7 +45,7 @@
 #include "VideoCommon/RenderBase.h"
 #include "VideoCommon/VideoBackendBase.h"
 
-static std::unique_ptr<Instance> PlatformInstance;
+static std::shared_ptr<Instance> PlatformInstance;
 
 static void signal_handler(int)
 {
@@ -140,7 +140,7 @@ void Host_TitleChanged()
 
 std::unique_ptr<GBAHostInterface> Host_CreateGBAHost(std::weak_ptr<HW::GBA::Core> core)
 {
-    return std::make_unique<GBAInstance>(core);
+    return std::make_unique<GBAInstance>(core, PlatformInstance);
 }
 
 static std::unique_ptr<Instance> GetInstance(const optparse::Values& options)
