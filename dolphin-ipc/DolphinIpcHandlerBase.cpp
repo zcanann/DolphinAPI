@@ -140,6 +140,7 @@ void DolphinIpcHandlerBase::onInstanceToServerDataReceived(const DolphinIpcToSer
         SERVER_DISPATCH(OnInstanceMemoryCardFormatted)
         SERVER_DISPATCH(OnInstanceMemoryRead)
         SERVER_DISPATCH(OnInstanceMemoryWrite)
+        SERVER_DISPATCH(OnInstanceRenderGba)
         case DolphinServerIpcCall::Null: default: std::cout << "NULL instance => server call!" << std::endl; break;
     }
 }

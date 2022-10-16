@@ -11,6 +11,8 @@
 
 #include "Instance.h"
 
+#include "GBAInstance.h"
+
 #include <OptionParser.h>
 #include <cstddef>
 #include <cstdio>
@@ -138,7 +140,7 @@ void Host_TitleChanged()
 
 std::unique_ptr<GBAHostInterface> Host_CreateGBAHost(std::weak_ptr<HW::GBA::Core> core)
 {
-    return nullptr;
+    return std::make_unique<GBAInstance>(core);
 }
 
 static std::unique_ptr<Instance> GetInstance(const optparse::Values& options)

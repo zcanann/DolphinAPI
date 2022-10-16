@@ -145,8 +145,8 @@ void Instance::PrepareForTASInput()
 
     for (int controllerIndex = 0; controllerIndex < SerialInterface::MAX_SI_CHANNELS; controllerIndex++)
     {
-        Config::SetBaseOrCurrent(Config::GetInfoForSIDevice(static_cast<int>(controllerIndex)), SerialInterface::SIDevices::SIDEVICE_GC_CONTROLLER);
-        SerialInterface::ChangeDevice(SerialInterface::SIDevices::SIDEVICE_GC_CONTROLLER, controllerIndex);
+        Config::SetBaseOrCurrent(Config::GetInfoForSIDevice(static_cast<int>(controllerIndex)), SerialInterface::SIDevices::SIDEVICE_GC_GBA_EMULATED);
+        SerialInterface::ChangeDevice(SerialInterface::SIDevices::SIDEVICE_GC_GBA_EMULATED, controllerIndex);
     }
 
     if (GCAdapter::UseAdapter())

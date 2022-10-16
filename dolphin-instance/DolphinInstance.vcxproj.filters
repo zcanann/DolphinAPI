@@ -8,6 +8,7 @@
     <ClCompile Include="MockServer.cpp" />
     <ClCompile Include="InstanceConfigLoader.cpp" />
     <ClCompile Include="InstanceUtils.cpp" />
+    <ClCompile Include="GBAInstance.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Instance.h" />
@@ -15,6 +16,7 @@
     <ClInclude Include="TemplateHelpers.h" />
     <ClInclude Include="InstanceConfigLoader.h" />
     <ClInclude Include="InstanceUtils.h" />
+    <ClInclude Include="GBAInstance.h" />
   </ItemGroup>
   <ItemGroup>
     <Manifest Include="DolphinInstance.exe.manifest" />

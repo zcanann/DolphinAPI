@@ -78,6 +78,7 @@ protected:
 	SERVER_FUNC(OnInstanceMemoryCardFormatted)
 	SERVER_FUNC(OnInstanceMemoryRead)
 	SERVER_FUNC(OnInstanceMemoryWrite)
+	SERVER_FUNC(OnInstanceRenderGba)
 
 private:
 	template<class T>

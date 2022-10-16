@@ -23,6 +23,7 @@ enum class DolphinServerIpcCall
 	DolphinServer_OnInstanceMemoryCardFormatted,
 	DolphinServer_OnInstanceMemoryRead,
 	DolphinServer_OnInstanceMemoryWrite,
+	DolphinServer_OnInstanceRenderGba,
 };
 
 struct ToServerParams_OnInstanceConnected
@@ -158,6 +159,21 @@ struct ToServerParams_OnInstanceMemoryWrite
 	}
 };
 
+struct ToServerParams_OnInstanceRenderGba
+{
+	int _width = 0;
+	int _height = 0;
+	std::vector<unsigned int> _frameBuffer;
+
+	template <class Archive>
+	void serialize(Archive& ar)
+	{
+		ar(_width);
+		ar(_height);
+		ar(_frameBuffer);
+	}
+};
+
 #define TO_SERVER_MEMBER(Name) std::shared_ptr<ToServerParams_##Name> _params ## Name;
 union DolphinIpcToServerDataParams
 {
@@ -174,6 +190,7 @@ union DolphinIpcToServerDataParams
 	TO_SERVER_MEMBER(OnInstanceMemoryCardFormatted)
 	TO_SERVER_MEMBER(OnInstanceMemoryRead)
 	TO_SERVER_MEMBER(OnInstanceMemoryWrite)
+	TO_SERVER_MEMBER(OnInstanceRenderGba)
 };
 
 #define TO_SERVER_ARCHIVE(Name) case DolphinServerIpcCall::DolphinServer_ ## Name: \
@@ -206,6 +223,7 @@ struct DolphinIpcToServerData
 			TO_SERVER_ARCHIVE(OnInstanceMemoryCardFormatted)
 			TO_SERVER_ARCHIVE(OnInstanceMemoryRead)
 			TO_SERVER_ARCHIVE(OnInstanceMemoryWrite)
+			TO_SERVER_ARCHIVE(OnInstanceRenderGba)
 		}
 	}
 };

@@ -42,6 +42,7 @@
   </ItemDefinitionGroup>
   <Import Project="$(ExternalsDir)ExternalsReferenceAll.props" />
   <ItemGroup>
+    <ClCompile Include="GBAInstance.cpp" />
     <ClCompile Include="InstanceUtils.cpp" />
     <ClCompile Include="InstanceConfigLoader.cpp" />
     <ClCompile Include="MainNoGUI.cpp" />
@@ -58,6 +59,7 @@
     <SourceFiles Include="$(TargetPath)" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="GBAInstance.h" />
     <ClInclude Include="InstanceUtils.h" />
     <ClInclude Include="Instance.h" />
     <ClInclude Include="InstanceConfigLoader.h" />
