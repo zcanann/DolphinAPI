@@ -10,6 +10,7 @@
 #include "Instance.h"
 
 #include "Core/HW/GBACore.h"
+#include "Common/Random.h"
 
 GBAInstance::GBAInstance(std::weak_ptr<HW::GBA::Core> core, std::weak_ptr<Instance> instance)
 {
@@ -35,7 +36,7 @@ void GBAInstance::FrameEnded(const std::vector<u32>& video_buffer)
     std::shared_ptr<HW::GBA::Core> core_ptr = m_core.lock();
     std::shared_ptr<Instance> instanc_ptr = m_instance.lock();
 
-    if (throttle++ % 30 != 0)
+    if (--throttle > 0)
     {
         return;
     }
@@ -51,15 +52,28 @@ void GBAInstance::FrameEnded(const std::vector<u32>& video_buffer)
         data->_width = m_core_info.width;
         data->_height = m_core_info.height;
 
-        // Set to the same size as the video buffer, but we shouldn't end up using it all due to jpg compression
-        data->_frameBuffer.resize(video_buffer.size());
+        // (Optionally) Compress video buffer
+        static const bool UseJpgCompression = false;
 
-        int bufferSize = int(data->_frameBuffer.size());
-        jpge::compress_image_to_jpeg_file_in_memory(data->_frameBuffer.data(), bufferSize, m_core_info.width, m_core_info.height, 4,
-            reinterpret_cast<const jpge::uint8*>(video_buffer.data()), jpge::params());
+        if (UseJpgCompression)
+        {
+            // Set to the same size as the video buffer, but we shouldn't end up using it all due to jpg compression
+            data->_frameBuffer.resize(video_buffer.size());
 
-        data->_frameBuffer.resize(bufferSize);
+            int bufferSize = int(data->_frameBuffer.size());
+            jpge::compress_image_to_jpeg_file_in_memory(data->_frameBuffer.data(), bufferSize, m_core_info.width, m_core_info.height, 4,
+                reinterpret_cast<const jpge::uint8*>(video_buffer.data()), jpge::params());
+            data->_frameBuffer.resize(bufferSize);
+            data->_compressed = true;
+        }
+        else
+        {
+            data->_frameBuffer = video_buffer;
+            data->_compressed = false;
+        }
         
         instanc_ptr->ipcSendToServer(ipcData);
     }
+
+    throttle = 30 + Common::Random::GenerateValue<u8>() % 3;
 }

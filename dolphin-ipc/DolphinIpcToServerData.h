@@ -164,6 +164,7 @@ struct ToServerParams_OnInstanceRenderGba
 	int _controllerIndex = 0;
 	int _width = 0;
 	int _height = 0;
+	bool _compressed = false;
 	std::vector<unsigned int> _frameBuffer;
 
 	template <class Archive>
@@ -172,6 +173,7 @@ struct ToServerParams_OnInstanceRenderGba
 		ar(_controllerIndex);
 		ar(_width);
 		ar(_height);
+		ar(_compressed);
 		ar(_frameBuffer);
 	}
 };
