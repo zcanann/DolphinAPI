@@ -9,21 +9,7 @@
 
 #pragma optimize("", off)
 
-static const int BUFFER_SIZE = 65535;
-
 NamedPipe::NamedPipe(std::string& sName) : m_sPipeName(sName)
-{
-    m_buffer = (char*)calloc(BUFFER_SIZE, sizeof(char));
-    Init();
-}
-
-NamedPipe::~NamedPipe(void)
-{
-    delete m_buffer;
-    m_buffer = NULL;
-}
-
-void NamedPipe::Init()
 {
     if (m_sPipeName.empty())
     {
@@ -49,16 +35,20 @@ void NamedPipe::Init()
     }
 }
 
+NamedPipe::~NamedPipe(void)
+{
+}
+
 void NamedPipe::send(std::string& sData)
 {
-    memset(&m_buffer[0], 0, BUFFER_SIZE);
-    memcpy(&m_buffer[0], sData.c_str(), __min(BUFFER_SIZE, sData.size()));
+   // memset(&m_buffer[0], 0, BUFFER_SIZE);
+    // memcpy(&m_buffer[0], sData.c_str(), __min(BUFFER_SIZE, sData.size()));
 }
 
 void NamedPipe::recv(std::string& sData)
 {
     sData.clear(); // Clear old data, if any
-    sData.append(m_buffer);
+    // sData.append(m_buffer);
 }
 
 void NamedPipe::Close()
@@ -69,6 +59,7 @@ void NamedPipe::Close()
 
 bool NamedPipe::Read()
 {
+    return false;
     DWORD drBytes = 0;
     BOOL bFinishedRead = FALSE;
     int read = 0;
@@ -78,7 +69,7 @@ bool NamedPipe::Read()
         bFinishedRead = ::ReadFile( 
             m_hPipe,
             &m_buffer[read],
-            BUFFER_SIZE,
+            m_buffer.size(),
             &drBytes,
             NULL);
 
@@ -103,15 +94,16 @@ bool NamedPipe::Read()
 
 bool NamedPipe::Write()
 {
+    return false;
     DWORD dwBytes;
     BOOL bResult = ::WriteFile(
-        m_hPipe,                  // handle to pipe
-        m_buffer,                 // buffer to write from
-        ::strlen(m_buffer)*sizeof(wchar_t) + 1,     // number of bytes to write, include the NULL
-        &dwBytes,                 // number of bytes written
-        NULL);                  // not overlapped I/O
+        m_hPipe,
+        m_buffer.data(),
+        ::strlen(m_buffer.data())*sizeof(wchar_t) + 1,
+        &dwBytes,
+        NULL);
 
-    if(FALSE == bResult || strlen(m_buffer)*sizeof(wchar_t) + 1 != dwBytes)
+    if(FALSE == bResult || strlen(m_buffer.data())*sizeof(wchar_t) + 1 != dwBytes)
     {
         //SetEventData("WriteFile failed");
         return false;

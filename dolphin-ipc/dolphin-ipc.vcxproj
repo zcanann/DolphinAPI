@@ -128,7 +128,7 @@
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <PrecompiledHeaderFile>
       </PrecompiledHeaderFile>
-      <AdditionalIncludeDirectories>$(ProjectDir)/external/;$(ProjectDir)/external/cpp-ipc/include/;</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)/external/;</AdditionalIncludeDirectories>
       <BufferSecurityCheck>true</BufferSecurityCheck>
     </ClCompile>
     <Link>

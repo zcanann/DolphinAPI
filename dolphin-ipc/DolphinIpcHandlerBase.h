@@ -16,8 +16,6 @@
 #include <string>
 #include <thread>
 
-#include "libipc/ipc.h"
-
 #define NOT_IMPLEMENTED() std::cout << "CALLED UNIMPLEMENTED HANDLER FUNC" << std::endl;
 #define CREATE_TO_INSTANCE_DATA(IpcCall, IpcVariableName, VariableName) \
 	DolphinIpcToInstanceData IpcVariableName; \
