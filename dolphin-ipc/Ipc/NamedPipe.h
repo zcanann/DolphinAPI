@@ -20,5 +20,7 @@ private:
     HANDLE m_hPipe = nullptr;
     bool m_isOwner = false;
     bool m_hasConnected = false;
-    std::vector<char> m_buffer = std::vector<char>(65536);
+
+    // 16MB of a buffer. This needs to be large enough to hold an entire frame buffer, since rendering messages may be passed.
+    std::vector<char> m_buffer = std::vector<char>(16777216);
 };

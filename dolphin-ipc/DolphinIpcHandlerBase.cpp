@@ -91,12 +91,10 @@ void DolphinIpcHandlerBase::ipcReadData(std::shared_ptr<NamedPipe>& channel, std
 
     while (channel->recv(rawData))
     {
-        size_t dataSize = rawData.size();
-
-        std::cout << __func__ << ": recv " << dataSize << " bytes" << std::endl;
+        std::cout << __func__ << ": recv " << rawData.size() << " bytes" << std::endl;
 
         T data;
-        std::stringstream memoryStream(std::string((char*)rawData.data(), dataSize), std::ios::binary);
+        std::stringstream memoryStream(rawData, std::ios::binary | std::ios::out | std::ios::in);
         cereal::BinaryInputArchive deserializer(memoryStream);
         deserializer(data);
         onDeserialize(data);

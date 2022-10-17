@@ -8,8 +8,6 @@
 #include "windows.h"
 #include "tchar.h"
 
-#pragma optimize("", off)
-
 NamedPipe::NamedPipe(std::string& sName, bool isOwner) : m_sPipeName(sName), m_isOwner(isOwner)
 {
     if (m_sPipeName.empty())
@@ -59,9 +57,6 @@ NamedPipe::~NamedPipe()
 
 bool NamedPipe::send(std::string& sData)
 {
-    std::fill(m_buffer.begin(), m_buffer.end(), 0);
-    memcpy(&m_buffer[0], sData.c_str(), __min(m_buffer.size(), sData.size()));
-
     DWORD bytesWritten;
     BOOL bResult = ::WriteFile(
         m_hPipe,
@@ -85,13 +80,13 @@ bool NamedPipe::recv(std::string& sData)
 
     DWORD bytesRead = 0;
     BOOL bFinishedRead = FALSE;
-    int read = 0;
+    int readBufferIndex = 0;
 
     do
     {
         bool peak = ::PeekNamedPipe(
             m_hPipe,
-            &m_buffer[read],
+            &m_buffer[readBufferIndex],
             (DWORD)m_buffer.size(),
             &bytesRead,
             0,
@@ -104,7 +99,7 @@ bool NamedPipe::recv(std::string& sData)
 
         bFinishedRead = ::ReadFile(
             m_hPipe,
-            &m_buffer[read],
+            &m_buffer[readBufferIndex],
             (DWORD)m_buffer.size(),
             &bytesRead,
             NULL);
@@ -115,7 +110,7 @@ bool NamedPipe::recv(std::string& sData)
             break;
         }
 
-        read += bytesRead;
+        readBufferIndex += bytesRead;
 
     } while (!bFinishedRead);
 
@@ -125,9 +120,7 @@ bool NamedPipe::recv(std::string& sData)
         return false;
     }
     
-    // sData.append(m_buffer.data());
-    sData.resize(bytesRead);
-    memcpy((void*)sData.data(), &m_buffer, bytesRead);
+    sData.append(m_buffer.data(), bytesRead);
 
     return true;
 }
@@ -137,6 +130,3 @@ void NamedPipe::close()
     ::CloseHandle(m_hPipe);
     m_hPipe = NULL;
 }
-
-
-#pragma optimize("", on)
