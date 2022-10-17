@@ -35,6 +35,11 @@ void GBAInstance::FrameEnded(const std::vector<u32>& video_buffer)
     std::shared_ptr<HW::GBA::Core> core_ptr = m_core.lock();
     std::shared_ptr<Instance> instanc_ptr = m_instance.lock();
 
+    if (throttle++ % 30 != 0)
+    {
+        return;
+    }
+
     if (core_ptr && instanc_ptr)
     {
         HW::GBA::CoreInfo m_core_info = core_ptr->GetCoreInfo();

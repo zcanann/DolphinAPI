@@ -28,4 +28,6 @@ private:
   GBAWidgetController* m_widget_controller{};
   std::weak_ptr<HW::GBA::Core> m_core;
   std::weak_ptr<Instance> m_instance;
+
+  int throttle = 0;
 };
