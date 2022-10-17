@@ -954,8 +954,9 @@ namespace jpge {
 
 		bool open(const char* pFilename)
 		{
+			// ZAC: Disabled due to strict warnings. We do not need file support for IPC purposes.
 			close();
-			m_pFile = fopen(pFilename, "wb");
+			m_pFile = nullptr; // fopen(pFilename, "wb");
 			m_bStatus = (m_pFile != NULL);
 			return m_bStatus;
 		}

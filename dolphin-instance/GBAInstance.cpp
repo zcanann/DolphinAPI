@@ -4,9 +4,8 @@
 #include "GBAInstance.h"
 
 #include "dolphin-ipc/DolphinIpcHandlerBase.h"
+#include "dolphin-ipc/external/jpeg-compressor/jpge.h"
 #include "dolphin-ipc/IpcStructs.h"
-
-#include "external/jpeg-compressor/jpge.h"
 
 #include "Instance.h"
 

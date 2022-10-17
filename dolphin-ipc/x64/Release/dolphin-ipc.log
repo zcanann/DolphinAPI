@@ -1,3 +1,2 @@
-﻿  DolphinIpcHandlerBase.cpp
-  NamedPipe.cpp
+﻿  jpge.cpp
   dolphin-ipc.vcxproj -> C:\Projects\DolphinTAS\Plugins\DolphinUnreal\ThirdParty\DolphinAPI\Build\x64\Release\DolphinIPC.lib

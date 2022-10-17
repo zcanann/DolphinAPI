@@ -9,12 +9,6 @@
     <ClCompile Include="InstanceConfigLoader.cpp" />
     <ClCompile Include="InstanceUtils.cpp" />
     <ClCompile Include="GBAInstance.cpp" />
-    <ClCompile Include="external\jpeg-compressor\jpge.cpp">
-      <Filter>external\jpeg-compressor</Filter>
-    </ClCompile>
-    <ClCompile Include="external\jpeg-compressor\jpgd.cpp">
-      <Filter>external\jpeg-compressor</Filter>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Instance.h" />
@@ -23,15 +17,6 @@
     <ClInclude Include="InstanceConfigLoader.h" />
     <ClInclude Include="InstanceUtils.h" />
     <ClInclude Include="GBAInstance.h" />
-    <ClInclude Include="external\jpeg-compressor\jpge.h">
-      <Filter>external\jpeg-compressor</Filter>
-    </ClInclude>
-    <ClInclude Include="external\jpeg-compressor\jpgd.h">
-      <Filter>external\jpeg-compressor</Filter>
-    </ClInclude>
-    <ClInclude Include="external\jpeg-compressor\jpgd_idct.h">
-      <Filter>external\jpeg-compressor</Filter>
-    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Manifest Include="DolphinInstance.exe.manifest" />
@@ -44,13 +29,5 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="cpp.hint" />
-  </ItemGroup>
-  <ItemGroup>
-    <Filter Include="external">
-      <UniqueIdentifier>{f2b830cc-bafe-4075-92e5-c167b8391dc9}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="external\jpeg-compressor">
-      <UniqueIdentifier>{91fc84ce-2fd5-4858-9fce-38c912a53601}</UniqueIdentifier>
-    </Filter>
   </ItemGroup>
 </Project>

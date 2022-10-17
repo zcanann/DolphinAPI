@@ -42,8 +42,6 @@
   </ItemDefinitionGroup>
   <Import Project="$(ExternalsDir)ExternalsReferenceAll.props" />
   <ItemGroup>
-    <ClCompile Include="external\jpeg-compressor\jpgd.cpp" />
-    <ClCompile Include="external\jpeg-compressor\jpge.cpp" />
     <ClCompile Include="GBAInstance.cpp" />
     <ClCompile Include="InstanceUtils.cpp" />
     <ClCompile Include="InstanceConfigLoader.cpp" />
@@ -61,9 +59,6 @@
     <SourceFiles Include="$(TargetPath)" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="external\jpeg-compressor\jpgd.h" />
-    <ClInclude Include="external\jpeg-compressor\jpgd_idct.h" />
-    <ClInclude Include="external\jpeg-compressor\jpge.h" />
     <ClInclude Include="GBAInstance.h" />
     <ClInclude Include="InstanceUtils.h" />
     <ClInclude Include="Instance.h" />

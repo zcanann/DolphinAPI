@@ -247,16 +247,22 @@
     <ClInclude Include="external\cereal\types\variant.hpp" />
     <ClInclude Include="external\cereal\types\vector.hpp" />
     <ClInclude Include="external\cereal\version.hpp" />
+    <ClInclude Include="external\jpeg-compressor\jpgd.h" />
+    <ClInclude Include="external\jpeg-compressor\jpgd_idct.h" />
+    <ClInclude Include="external\jpeg-compressor\jpge.h" />
     <ClInclude Include="IpcStructs.h" />
     <ClInclude Include="Ipc\NamedPipe.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="DolphinIpcHandlerBase.cpp" />
+    <ClCompile Include="external\jpeg-compressor\jpgd.cpp" />
+    <ClCompile Include="external\jpeg-compressor\jpge.cpp" />
     <ClCompile Include="Ipc\NamedPipe.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="cpp.hint" />
     <None Include="external\cereal\external\rapidxml\manual.html" />
+    <None Include="external\jpeg-compressor\README.md" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

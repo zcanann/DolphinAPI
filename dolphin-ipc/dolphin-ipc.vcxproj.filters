@@ -16,6 +16,12 @@
     <Filter Include="Ipc">
       <UniqueIdentifier>{f244bdb8-4812-4bfd-9108-9e7c881ff00f}</UniqueIdentifier>
     </Filter>
+    <Filter Include="external">
+      <UniqueIdentifier>{307cbf39-04c5-44df-824e-3de6074950eb}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="external\jpeg-compressor">
+      <UniqueIdentifier>{fe8ec759-653b-46a0-8f29-b001dc0ea390}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="external\cereal\archives\adapters.hpp">
@@ -280,15 +286,33 @@
     <ClInclude Include="Ipc\NamedPipe.h">
       <Filter>Ipc</Filter>
     </ClInclude>
+    <ClInclude Include="external\jpeg-compressor\jpge.h">
+      <Filter>external\jpeg-compressor</Filter>
+    </ClInclude>
+    <ClInclude Include="external\jpeg-compressor\jpgd.h">
+      <Filter>external\jpeg-compressor</Filter>
+    </ClInclude>
+    <ClInclude Include="external\jpeg-compressor\jpgd_idct.h">
+      <Filter>external\jpeg-compressor</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="external\cereal\external\rapidxml\manual.html" />
     <None Include="cpp.hint" />
+    <None Include="external\jpeg-compressor\README.md">
+      <Filter>external\jpeg-compressor</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="DolphinIpcHandlerBase.cpp" />
     <ClCompile Include="Ipc\NamedPipe.cpp">
       <Filter>Ipc</Filter>
+    </ClCompile>
+    <ClCompile Include="external\jpeg-compressor\jpge.cpp">
+      <Filter>external\jpeg-compressor</Filter>
+    </ClCompile>
+    <ClCompile Include="external\jpeg-compressor\jpgd.cpp">
+      <Filter>external\jpeg-compressor</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>
