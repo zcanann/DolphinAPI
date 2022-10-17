@@ -2,6 +2,7 @@
 
 #include <codecvt>
 #include <iostream>
+#include <future>
 #include <locale>
 #include "process.h"
 #include "windows.h"
@@ -9,7 +10,7 @@
 
 #pragma optimize("", off)
 
-NamedPipe::NamedPipe(std::string& sName, bool isServer) : m_sPipeName(sName), m_isServer(isServer)
+NamedPipe::NamedPipe(std::string& sName, bool isOwner) : m_sPipeName(sName), m_isOwner(isOwner)
 {
     if (m_sPipeName.empty())
     {
@@ -19,33 +20,33 @@ NamedPipe::NamedPipe(std::string& sName, bool isServer) : m_sPipeName(sName), m_
 
     std::wstring pipeName = L"\\\\.\\pipe\\" + std::wstring_convert<std::codecvt_utf8<wchar_t>>().from_bytes(m_sPipeName);
 
-    if (m_isServer)
+    if (m_isOwner)
     {
         m_hPipe = ::CreateNamedPipe(
             pipeName.c_str(),
             PIPE_ACCESS_DUPLEX,
-            PIPE_TYPE_MESSAGE | PIPE_READMODE_MESSAGE | PIPE_WAIT,
+            PIPE_TYPE_MESSAGE | PIPE_READMODE_MESSAGE | PIPE_NOWAIT,
             PIPE_UNLIMITED_INSTANCES,
-            m_buffer.size(),
-            m_buffer.size(),
-            NMPWAIT_USE_DEFAULT_WAIT,
+            DWORD(m_buffer.size()),
+            DWORD(m_buffer.size()),
+            NMPWAIT_WAIT_FOREVER,
             NULL);
 
-        ConnectNamedPipe(m_hPipe, NULL);
+        ::ConnectNamedPipe(m_hPipe, NULL);
     }
     else
     {
         m_hPipe = ::CreateFile(
             pipeName.c_str(),
-            GENERIC_READ,
-            FILE_SHARE_READ | FILE_SHARE_WRITE,
+            GENERIC_READ | GENERIC_WRITE,
+            0,
             NULL,
             OPEN_EXISTING,
-            FILE_ATTRIBUTE_NORMAL,
+            0,
             NULL);
     }
 
-    if (INVALID_HANDLE_VALUE == m_hPipe)
+    if (m_hPipe == INVALID_HANDLE_VALUE)
     {
         std::cout << "Error: Could not create named pipe" << std::endl;
     }
@@ -58,8 +59,8 @@ NamedPipe::~NamedPipe()
 
 bool NamedPipe::send(std::string& sData)
 {
-    // std::fill(m_buffer.begin(), m_buffer.end(), 0);
-    // memcpy(&m_buffer[0], sData.c_str(), __min(m_buffer.size(), sData.size()));
+    std::fill(m_buffer.begin(), m_buffer.end(), 0);
+    memcpy(&m_buffer[0], sData.c_str(), __min(m_buffer.size(), sData.size()));
 
     DWORD bytesWritten;
     BOOL bResult = ::WriteFile(
@@ -69,9 +70,9 @@ bool NamedPipe::send(std::string& sData)
         &bytesWritten,
         NULL);
 
-    if (FALSE == bResult || DWORD(sData.size()) != bytesWritten)
+    if (bResult == FALSE || DWORD(sData.size()) != bytesWritten)
     {
-        std::cout << "WriteFile failed" << std::endl;
+        std::cout << "WriteFile failed: " << GetLastError() << std::endl;
         return false;
     }
 
@@ -81,7 +82,6 @@ bool NamedPipe::send(std::string& sData)
 bool NamedPipe::recv(std::string& sData)
 {
     sData.clear();
-    sData.append(m_buffer.data());
 
     DWORD bytesRead = 0;
     BOOL bFinishedRead = FALSE;
@@ -89,6 +89,19 @@ bool NamedPipe::recv(std::string& sData)
 
     do
     {
+        bool peak = ::PeekNamedPipe(
+            m_hPipe,
+            &m_buffer[read],
+            (DWORD)m_buffer.size(),
+            &bytesRead,
+            0,
+            0);
+
+        if (!peak || bytesRead == 0)
+        {
+            return false;
+        }
+
         bFinishedRead = ::ReadFile(
             m_hPipe,
             &m_buffer[read],
@@ -106,11 +119,15 @@ bool NamedPipe::recv(std::string& sData)
 
     } while (!bFinishedRead);
 
-    if (FALSE == bFinishedRead || 0 == bytesRead)
+    if (bFinishedRead == FALSE || 0 == bytesRead)
     {
-        std::cout << "ReadFile failed" << std::endl;
+        std::cout << "ReadFile failed" << GetLastError() << std::endl;
         return false;
     }
+    
+    // sData.append(m_buffer.data());
+    sData.resize(bytesRead);
+    memcpy((void*)sData.data(), &m_buffer, bytesRead);
 
     return true;
 }

@@ -36,13 +36,13 @@ void DolphinIpcHandlerBase::initializeChannels(const std::string& uniqueChannelI
 
     if (_isInstance)
     {
-        _instanceToServer = std::make_shared<NamedPipe>(NamedPipe(uniqueInstanceToServerChannel, !_isInstance));
-        _serverToInstance = std::make_shared<NamedPipe>(NamedPipe(uniqueInstanceToServerChannel, !_isInstance));
+        _instanceToServer = std::make_shared<NamedPipe>(uniqueInstanceToServerChannel, false);
+        _serverToInstance = std::make_shared<NamedPipe>(uniqueServerToInstanceChannel, false);
     }
     else
     {
-        _serverToInstance = std::make_shared<NamedPipe>(NamedPipe(uniqueServerToInstanceChannel, !_isInstance));
-        _instanceToServer = std::make_shared<NamedPipe>(NamedPipe(uniqueServerToInstanceChannel, !_isInstance));
+        _serverToInstance = std::make_shared<NamedPipe>(uniqueServerToInstanceChannel, true);
+        _instanceToServer = std::make_shared<NamedPipe>(uniqueInstanceToServerChannel, true);
     }
 }
 

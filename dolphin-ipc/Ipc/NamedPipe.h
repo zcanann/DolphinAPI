@@ -7,7 +7,7 @@
 class NamedPipe
 {
 public:
-    NamedPipe(std::string& sName, bool isServer);
+    NamedPipe(std::string& sName, bool isOwner);
     virtual ~NamedPipe(void);
 
     bool send(std::string& sData);
@@ -18,6 +18,7 @@ private:
 
     const std::string m_sPipeName;
     HANDLE m_hPipe = nullptr;
-    bool m_isServer = false;
-    std::vector<char> m_buffer = std::vector<char>(65535);
+    bool m_isOwner = false;
+    bool m_hasConnected = false;
+    std::vector<char> m_buffer = std::vector<char>(65536);
 };
