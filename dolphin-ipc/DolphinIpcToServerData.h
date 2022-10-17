@@ -177,9 +177,9 @@ struct ToServerParams_OnInstanceRenderGba
 };
 
 #define TO_SERVER_MEMBER(Name) std::shared_ptr<ToServerParams_##Name> _params ## Name;
-union DolphinIpcToServerDataParams
+struct DolphinIpcToServerDataParams
 {
-	DolphinIpcToServerDataParams() : _paramsOnInstanceConnected({}) { }
+	DolphinIpcToServerDataParams() {}
 	~DolphinIpcToServerDataParams() {}
 
 	TO_SERVER_MEMBER(OnInstanceConnected)
