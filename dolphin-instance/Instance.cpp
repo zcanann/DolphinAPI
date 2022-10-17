@@ -41,8 +41,8 @@
 
 Instance::Instance(const InstanceBootParameters& bootParams)
 {
-    initializeChannels(bootParams.instanceId, true);
     InitializeLaunchOptions(bootParams);
+    initializeChannels(bootParams.instanceId, true);
 
     Common::Log::LogManager::GetInstance()->RegisterListener(Common::Log::LogListener::LOG_WINDOW_LISTENER, this);
 }

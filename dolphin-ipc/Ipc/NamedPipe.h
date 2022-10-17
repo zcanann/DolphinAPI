@@ -7,18 +7,17 @@
 class NamedPipe
 {
 public:
-    NamedPipe(std::string& sName);
+    NamedPipe(std::string& sName, bool isServer);
     virtual ~NamedPipe(void);
 
-    void send(std::string& sData);
-    void recv(std::string& sData);
+    bool send(std::string& sData);
+    bool recv(std::string& sData);
 
 private:
-    void Close();
-    bool Read();
-    bool Write();
+    void close();
 
     const std::string m_sPipeName;
     HANDLE m_hPipe = nullptr;
+    bool m_isServer = false;
     std::vector<char> m_buffer = std::vector<char>(65535);
 };

@@ -1,2 +1,3 @@
-﻿  DolphinIpcHandlerBase.cpp
+﻿  NamedPipe.cpp
+C:\Projects\DolphinTAS\Plugins\DolphinUnreal\ThirdParty\DolphinAPI\dolphin-ipc\Ipc\NamedPipe.cpp(32,17): warning C4267: 'argument': conversion from 'size_t' to 'DWORD', possible loss of data
   dolphin-ipc.vcxproj -> C:\Projects\DolphinTAS\Plugins\DolphinUnreal\ThirdParty\DolphinAPI\Build\x64\Release\DolphinIPC.lib

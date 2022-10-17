@@ -9,7 +9,7 @@
 
 #pragma optimize("", off)
 
-NamedPipe::NamedPipe(std::string& sName) : m_sPipeName(sName)
+NamedPipe::NamedPipe(std::string& sName, bool isServer) : m_sPipeName(sName), m_isServer(isServer)
 {
     if (m_sPipeName.empty())
     {
@@ -19,15 +19,31 @@ NamedPipe::NamedPipe(std::string& sName) : m_sPipeName(sName)
 
     std::wstring pipeName = L"\\\\.\\pipe\\" + std::wstring_convert<std::codecvt_utf8<wchar_t>>().from_bytes(m_sPipeName);
 
-    m_hPipe = ::CreateNamedPipe(
-        pipeName.c_str(),                // pipe name 
-        PIPE_ACCESS_DUPLEX,       // read/write access 
-        PIPE_TYPE_MESSAGE | PIPE_READMODE_MESSAGE | PIPE_WAIT,  // message-type pipe/message-read mode/blocking mode
-        PIPE_UNLIMITED_INSTANCES, // max. instances  
-        1024,              // output buffer size 
-        1024,              // input buffer size 
-        NMPWAIT_USE_DEFAULT_WAIT, // client time-out 
-        NULL);                    // default security attribute 
+    if (m_isServer)
+    {
+        m_hPipe = ::CreateNamedPipe(
+            pipeName.c_str(),
+            PIPE_ACCESS_DUPLEX,
+            PIPE_TYPE_MESSAGE | PIPE_READMODE_MESSAGE | PIPE_WAIT,
+            PIPE_UNLIMITED_INSTANCES,
+            m_buffer.size(),
+            m_buffer.size(),
+            NMPWAIT_USE_DEFAULT_WAIT,
+            NULL);
+
+        ConnectNamedPipe(m_hPipe, NULL);
+    }
+    else
+    {
+        m_hPipe = ::CreateFile(
+            pipeName.c_str(),
+            GENERIC_READ,
+            FILE_SHARE_READ | FILE_SHARE_WRITE,
+            NULL,
+            OPEN_EXISTING,
+            FILE_ATTRIBUTE_NORMAL,
+            NULL);
+    }
 
     if (INVALID_HANDLE_VALUE == m_hPipe)
     {
@@ -35,55 +51,62 @@ NamedPipe::NamedPipe(std::string& sName) : m_sPipeName(sName)
     }
 }
 
-NamedPipe::~NamedPipe(void)
+NamedPipe::~NamedPipe()
 {
+    close();
 }
 
-void NamedPipe::send(std::string& sData)
+bool NamedPipe::send(std::string& sData)
 {
-   // memset(&m_buffer[0], 0, BUFFER_SIZE);
-    // memcpy(&m_buffer[0], sData.c_str(), __min(BUFFER_SIZE, sData.size()));
+    // std::fill(m_buffer.begin(), m_buffer.end(), 0);
+    // memcpy(&m_buffer[0], sData.c_str(), __min(m_buffer.size(), sData.size()));
+
+    DWORD bytesWritten;
+    BOOL bResult = ::WriteFile(
+        m_hPipe,
+        sData.data(),
+        DWORD(sData.size()),
+        &bytesWritten,
+        NULL);
+
+    if (FALSE == bResult || DWORD(sData.size()) != bytesWritten)
+    {
+        std::cout << "WriteFile failed" << std::endl;
+        return false;
+    }
+
+    return true;
 }
 
-void NamedPipe::recv(std::string& sData)
+bool NamedPipe::recv(std::string& sData)
 {
-    sData.clear(); // Clear old data, if any
-    // sData.append(m_buffer);
-}
+    sData.clear();
+    sData.append(m_buffer.data());
 
-void NamedPipe::Close()
-{
-    ::CloseHandle(m_hPipe);
-    m_hPipe = NULL;
-}
-
-bool NamedPipe::Read()
-{
-    return false;
-    DWORD drBytes = 0;
+    DWORD bytesRead = 0;
     BOOL bFinishedRead = FALSE;
     int read = 0;
 
     do
     {
-        bFinishedRead = ::ReadFile( 
+        bFinishedRead = ::ReadFile(
             m_hPipe,
             &m_buffer[read],
-            m_buffer.size(),
-            &drBytes,
+            (DWORD)m_buffer.size(),
+            &bytesRead,
             NULL);
 
-        if(!bFinishedRead && ERROR_MORE_DATA != GetLastError())
+        if (!bFinishedRead && ERROR_MORE_DATA != GetLastError())
         {
             bFinishedRead = FALSE;
             break;
         }
 
-        read += drBytes;
+        read += bytesRead;
 
     } while (!bFinishedRead);
 
-    if(FALSE == bFinishedRead || 0 == drBytes)
+    if (FALSE == bFinishedRead || 0 == bytesRead)
     {
         std::cout << "ReadFile failed" << std::endl;
         return false;
@@ -92,24 +115,11 @@ bool NamedPipe::Read()
     return true;
 }
 
-bool NamedPipe::Write()
+void NamedPipe::close()
 {
-    return false;
-    DWORD dwBytes;
-    BOOL bResult = ::WriteFile(
-        m_hPipe,
-        m_buffer.data(),
-        ::strlen(m_buffer.data())*sizeof(wchar_t) + 1,
-        &dwBytes,
-        NULL);
-
-    if(FALSE == bResult || strlen(m_buffer.data())*sizeof(wchar_t) + 1 != dwBytes)
-    {
-        //SetEventData("WriteFile failed");
-        return false;
-    }
-
-    return true;
+    ::CloseHandle(m_hPipe);
+    m_hPipe = NULL;
 }
+
 
 #pragma optimize("", on)

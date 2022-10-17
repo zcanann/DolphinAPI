@@ -30,7 +30,7 @@
       </EnableCOMDATFolding>
     </Link>
     <ClCompile>
-      <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(ExternalsDir)zstd\lib;%(AdditionalIncludeDirectories);$(SolutionDir);$(SolutionDir)/dolphin-ipc/external/;$(SolutionDir)/dolphin-ipc/external/cpp-ipc/include/;</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(ExternalsDir)zstd\lib;%(AdditionalIncludeDirectories);$(SolutionDir);$(SolutionDir)/dolphin-ipc/external/;</AdditionalIncludeDirectories>
       <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">ProgramDatabase</DebugInformationFormat>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Use</PrecompiledHeader>
       <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">pch.h</PrecompiledHeaderFile>
@@ -78,9 +78,6 @@
   <ItemGroup>
     <ProjectReference Include="..\dolphin-ipc\dolphin-ipc.vcxproj">
       <Project>{92404eec-8f15-4974-b689-82ded9983641}</Project>
-    </ProjectReference>
-    <ProjectReference Include="..\dolphin-ipc\external\cpp-ipc\src\ipc.vcxproj">
-      <Project>{02e9460e-1bba-3bad-991a-ff484b0adc55}</Project>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>

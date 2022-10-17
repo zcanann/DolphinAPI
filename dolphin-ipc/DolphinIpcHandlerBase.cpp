@@ -36,13 +36,13 @@ void DolphinIpcHandlerBase::initializeChannels(const std::string& uniqueChannelI
 
     if (_isInstance)
     {
-        _instanceToServer = std::make_shared<NamedPipe>(NamedPipe(uniqueInstanceToServerChannel));
-        _serverToInstance = std::make_shared<NamedPipe>(NamedPipe(uniqueInstanceToServerChannel));
+        _instanceToServer = std::make_shared<NamedPipe>(NamedPipe(uniqueInstanceToServerChannel, !_isInstance));
+        _serverToInstance = std::make_shared<NamedPipe>(NamedPipe(uniqueInstanceToServerChannel, !_isInstance));
     }
     else
     {
-        _serverToInstance = std::make_shared<NamedPipe>(NamedPipe(uniqueServerToInstanceChannel));
-        _instanceToServer = std::make_shared<NamedPipe>(NamedPipe(uniqueServerToInstanceChannel));
+        _serverToInstance = std::make_shared<NamedPipe>(NamedPipe(uniqueServerToInstanceChannel, !_isInstance));
+        _instanceToServer = std::make_shared<NamedPipe>(NamedPipe(uniqueServerToInstanceChannel, !_isInstance));
     }
 }
 
@@ -67,12 +67,11 @@ void DolphinIpcHandlerBase::ipcSendData(std::shared_ptr<NamedPipe>& channel, con
         std::string dataBuffer = memoryStream.str();
 
         std::cout << __func__ << ": try send..." << std::endl;
-        channel->send(dataBuffer);
-            /*
-        if ()
+
+        if (channel->send(dataBuffer))
         {
             std::cout << __func__ << ": sent " << dataBuffer.size() << " bytes" << std::endl;
-        }*/
+        }
     }
     else
     {
@@ -89,9 +88,8 @@ void DolphinIpcHandlerBase::ipcReadData(std::shared_ptr<NamedPipe>& channel, std
     }
 
     std::string rawData;
-    channel->recv(rawData);
 
-    while (!rawData.empty())
+    while (channel->recv(rawData))
     {
         size_t dataSize = rawData.size();
 
@@ -102,8 +100,6 @@ void DolphinIpcHandlerBase::ipcReadData(std::shared_ptr<NamedPipe>& channel, std
         cereal::BinaryInputArchive deserializer(memoryStream);
         deserializer(data);
         onDeserialize(data);
-
-        channel->recv(rawData);
     }
 }
 

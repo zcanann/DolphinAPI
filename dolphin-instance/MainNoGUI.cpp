@@ -1,8 +1,6 @@
 // Copyright 2008 Dolphin Emulator Project
 // SPDX-License-Identifier: GPL-2.0-or-later
 
-#pragma comment(lib, "ipc.lib")
-
 // Compile fix for debug mode
 #undef FMT_USE_NONTYPE_TEMPLATE_PARAMETERS
 #define FMT_USE_NONTYPE_TEMPLATE_PARAMETERS 0
