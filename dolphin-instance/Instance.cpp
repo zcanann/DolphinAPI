@@ -489,7 +489,7 @@ void Instance::UpdateRunningFlag()
     // Close if no heartbeat command sent over IPC recently
     if (std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now() - _lastHeartbeat) > std::chrono::seconds(15))
     {
-        RequestShutdown();
+        // RequestShutdown();
     }
 
     if (_shutdown_requested.TestAndClear())

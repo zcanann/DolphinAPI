@@ -44,7 +44,8 @@ void GBAInstance::FrameEnded(const std::vector<u32>& video_buffer)
         data->_controllerIndex = m_core_info.device_number;
         data->_width = m_core_info.width;
         data->_height = m_core_info.height;
-        data->_frameBuffer = video_buffer;
+        data->_frameBuffer.resize(video_buffer.size());
+        std::memcpy(data->_frameBuffer.data(), video_buffer.data(), video_buffer.size());
         instanc_ptr->ipcSendToServer(ipcData);
     }
 }

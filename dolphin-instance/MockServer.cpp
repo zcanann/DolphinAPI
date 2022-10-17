@@ -63,3 +63,7 @@ SERVER_FUNC_BODY(MockServer, OnInstanceMemoryCardFormatted, params)
 {
     std::cout << "memory card formatted" << std::endl;
 }
+
+SERVER_FUNC_BODY(MockServer, OnInstanceRenderGba, params)
+{
+}

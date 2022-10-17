@@ -12,6 +12,8 @@
 #include "cereal/archives/binary.hpp"
 #undef __GNUC__
 
+#include "Ipc/NamedPipe.h"
+
 const std::string DolphinIpcHandlerBase::ChannelNameInstanceToServerBase = "dol-i2s-";
 const std::string DolphinIpcHandlerBase::ChannelNameServerToInstanceBase = "dol-s2i-";
 
@@ -21,17 +23,6 @@ DolphinIpcHandlerBase::DolphinIpcHandlerBase()
 
 DolphinIpcHandlerBase::~DolphinIpcHandlerBase()
 {
-    if (_instanceToServer)
-    {
-        delete(_instanceToServer);
-        _instanceToServer = nullptr;
-    }
-
-    if (_serverToInstance)
-    {
-        delete(_serverToInstance);
-        _serverToInstance = nullptr;
-    }
 }
 
 void DolphinIpcHandlerBase::initializeChannels(const std::string& uniqueChannelId, bool isInstance)
@@ -45,13 +36,13 @@ void DolphinIpcHandlerBase::initializeChannels(const std::string& uniqueChannelI
 
     if (_isInstance)
     {
-        _instanceToServer = new ipc::channel(uniqueInstanceToServerChannel.c_str(), ipc::sender);
-        _serverToInstance = new ipc::channel(uniqueServerToInstanceChannel.c_str(), ipc::receiver);
+        _instanceToServer = std::make_shared<NamedPipe>(NamedPipe(uniqueInstanceToServerChannel));
+        _serverToInstance = std::make_shared<NamedPipe>(NamedPipe(uniqueInstanceToServerChannel));
     }
     else
     {
-        _instanceToServer = new ipc::channel(uniqueInstanceToServerChannel.c_str(), ipc::receiver);
-        _serverToInstance = new ipc::channel(uniqueServerToInstanceChannel.c_str(), ipc::sender);
+        _serverToInstance = std::make_shared<NamedPipe>(NamedPipe(uniqueServerToInstanceChannel));
+        _instanceToServer = std::make_shared<NamedPipe>(NamedPipe(uniqueServerToInstanceChannel));
     }
 }
 
@@ -66,7 +57,7 @@ void DolphinIpcHandlerBase::ipcSendToServer(const DolphinIpcToServerData& data)
 }
 
 template<class T>
-void DolphinIpcHandlerBase::ipcSendData(ipc::channel* channel, const T& data)
+void DolphinIpcHandlerBase::ipcSendData(std::shared_ptr<NamedPipe>& channel, const T& data)
 {
     if (channel != nullptr)
     {
@@ -76,10 +67,12 @@ void DolphinIpcHandlerBase::ipcSendData(ipc::channel* channel, const T& data)
         std::string dataBuffer = memoryStream.str();
 
         std::cout << __func__ << ": try send..." << std::endl;
-        if (channel->try_send(dataBuffer, 5000))
+        channel->send(dataBuffer);
+            /*
+        if ()
         {
             std::cout << __func__ << ": sent " << dataBuffer.size() << " bytes" << std::endl;
-        }
+        }*/
     }
     else
     {
@@ -88,14 +81,15 @@ void DolphinIpcHandlerBase::ipcSendData(ipc::channel* channel, const T& data)
 }
 
 template<class T>
-void DolphinIpcHandlerBase::ipcReadData(ipc::channel* channel, std::function<void(const T&)> onDeserialize)
+void DolphinIpcHandlerBase::ipcReadData(std::shared_ptr<NamedPipe>& channel, std::function<void(const T&)> onDeserialize)
 {
     if (channel == nullptr)
     {
         return;
     }
 
-    ipc::buff_t rawData = channel->try_recv();
+    std::string rawData;
+    channel->recv(rawData);
 
     while (!rawData.empty())
     {
@@ -104,12 +98,12 @@ void DolphinIpcHandlerBase::ipcReadData(ipc::channel* channel, std::function<voi
         std::cout << __func__ << ": recv " << dataSize << " bytes" << std::endl;
 
         T data;
-        std::istringstream memoryStream(std::string((char*)rawData.data(), dataSize), std::ios::binary);
+        std::stringstream memoryStream(std::string((char*)rawData.data(), dataSize), std::ios::binary);
         cereal::BinaryInputArchive deserializer(memoryStream);
         deserializer(data);
         onDeserialize(data);
 
-        rawData = channel->try_recv();
+        channel->recv(rawData);
     }
 }
 

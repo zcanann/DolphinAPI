@@ -30,6 +30,8 @@
 	IpcVariableName._call = DolphinServerIpcCall::DolphinServer_ ## IpcCall; \
 	IpcVariableName._params._params ## IpcCall = VariableName;
 
+class NamedPipe;
+
 class DolphinIpcHandlerBase
 {
 public:
@@ -82,17 +84,17 @@ protected:
 
 private:
 	template<class T>
-	void ipcSendData(ipc::channel* channel, const T& params);
+	void ipcSendData(std::shared_ptr<NamedPipe>& channel, const T& params);
 
 	template<class T>
-	void ipcReadData(ipc::channel* channel, std::function<void(const T&)> onDeserialize);
+	void ipcReadData(std::shared_ptr<NamedPipe>& channel, std::function<void(const T&)> onDeserialize);
 
 	void onInstanceToServerDataReceived(const DolphinIpcToServerData& data);
 	void onServerToInstanceDataReceived(const DolphinIpcToInstanceData& data);
 
 	bool _isInstance = true;
-	ipc::channel* _instanceToServer = nullptr;
-	ipc::channel* _serverToInstance = nullptr;
+	std::shared_ptr<NamedPipe> _instanceToServer = nullptr;
+	std::shared_ptr<NamedPipe> _serverToInstance = nullptr;
 
 	static const std::string ChannelNameInstanceToServerBase;
 	static const std::string ChannelNameServerToInstanceBase;

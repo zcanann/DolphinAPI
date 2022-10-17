@@ -129,6 +129,7 @@
       <PrecompiledHeaderFile>
       </PrecompiledHeaderFile>
       <AdditionalIncludeDirectories>$(ProjectDir)/external/;$(ProjectDir)/external/cpp-ipc/include/;</AdditionalIncludeDirectories>
+      <BufferSecurityCheck>true</BufferSecurityCheck>
     </ClCompile>
     <Link>
       <SubSystem>
@@ -247,9 +248,11 @@
     <ClInclude Include="external\cereal\types\vector.hpp" />
     <ClInclude Include="external\cereal\version.hpp" />
     <ClInclude Include="IpcStructs.h" />
+    <ClInclude Include="Ipc\NamedPipe.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="DolphinIpcHandlerBase.cpp" />
+    <ClCompile Include="Ipc\NamedPipe.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="cpp.hint" />

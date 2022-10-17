@@ -13,6 +13,9 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
+    <Filter Include="Ipc">
+      <UniqueIdentifier>{f244bdb8-4812-4bfd-9108-9e7c881ff00f}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="external\cereal\archives\adapters.hpp">
@@ -274,6 +277,9 @@
     <ClInclude Include="DolphinIpcToInstanceData.h" />
     <ClInclude Include="DolphinIpcToServerData.h" />
     <ClInclude Include="IpcStructs.h" />
+    <ClInclude Include="Ipc\NamedPipe.h">
+      <Filter>Ipc</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="external\cereal\external\rapidxml\manual.html" />
@@ -281,5 +287,8 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="DolphinIpcHandlerBase.cpp" />
+    <ClCompile Include="Ipc\NamedPipe.cpp">
+      <Filter>Ipc</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>
