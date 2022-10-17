@@ -223,9 +223,9 @@ struct ToInstanceParams_WriteMemory
 };
 
 #define TO_INSTANCE_MEMBER(Name) std::shared_ptr<ToInstanceParams_##Name> _params ## Name;
-union DolphinIpcToInstanceDataParams
+struct DolphinIpcToInstanceDataParams
 {
-	DolphinIpcToInstanceDataParams() : _paramsConnect({}) { }
+	DolphinIpcToInstanceDataParams() {}
 	~DolphinIpcToInstanceDataParams() {}
 
 	TO_INSTANCE_MEMBER(Connect)
