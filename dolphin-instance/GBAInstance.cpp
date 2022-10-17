@@ -6,6 +6,8 @@
 #include "dolphin-ipc/DolphinIpcHandlerBase.h"
 #include "dolphin-ipc/IpcStructs.h"
 
+#include "external/jpeg-compressor/jpge.h"
+
 #include "Instance.h"
 
 #include "Core/HW/GBACore.h"
@@ -44,8 +46,16 @@ void GBAInstance::FrameEnded(const std::vector<u32>& video_buffer)
         data->_controllerIndex = m_core_info.device_number;
         data->_width = m_core_info.width;
         data->_height = m_core_info.height;
+
+        // Set to the same size as the video buffer, but we shouldn't end up using it all due to jpg compression
         data->_frameBuffer.resize(video_buffer.size());
-        std::memcpy(data->_frameBuffer.data(), video_buffer.data(), video_buffer.size());
+
+        int bufferSize = int(data->_frameBuffer.size());
+        jpge::compress_image_to_jpeg_file_in_memory(data->_frameBuffer.data(), bufferSize, m_core_info.width, m_core_info.height, 4,
+            reinterpret_cast<const jpge::uint8*>(video_buffer.data()), jpge::params());
+
+        data->_frameBuffer.resize(bufferSize);
+        
         instanc_ptr->ipcSendToServer(ipcData);
     }
 }
