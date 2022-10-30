@@ -75,5 +75,5 @@ void GBAInstance::FrameEnded(const std::vector<u32>& video_buffer)
         instanc_ptr->ipcSendToServer(ipcData);
     }
 
-    throttle = 30 + Common::Random::GenerateValue<u8>() % 3;
+    throttle = 15 + Common::Random::GenerateValue<u8>() % 3;
 }

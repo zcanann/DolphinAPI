@@ -125,7 +125,6 @@ void DolphinIpcHandlerBase::onInstanceToServerDataReceived(const DolphinIpcToSer
         SERVER_DISPATCH(OnInstanceTerminated)
         SERVER_DISPATCH(OnInstanceRecordingStopped)
         SERVER_DISPATCH(OnInstanceSaveStateCreated)
-        SERVER_DISPATCH(OnInstanceMemoryCardFormatted)
         SERVER_DISPATCH(OnInstanceMemoryRead)
         SERVER_DISPATCH(OnInstanceMemoryWrite)
         SERVER_DISPATCH(OnInstanceRenderGba)

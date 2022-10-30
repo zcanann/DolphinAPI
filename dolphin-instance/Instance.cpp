@@ -68,7 +68,7 @@ void Instance::InitializeLaunchOptions(const InstanceBootParameters& bootParams)
     else
     {
         // Overwrite certain configs for non-mock sessions
-        Config::AddLayer(GenerateInstanceConfigLoader());
+        Config::AddLayer(GenerateInstanceConfigLoader(bootParams.instanceId));
     }
 
     if (recordOnLaunch)
@@ -147,9 +147,12 @@ void Instance::PrepareForTASInput()
     {
         // SIDEVICE_GC_CONTROLLER
         // SIDEVICE_GC_GBA_EMULATED
-        Config::SetBaseOrCurrent(Config::GetInfoForSIDevice(static_cast<int>(controllerIndex)), SerialInterface::SIDevices::SIDEVICE_GC_GBA_EMULATED);
-        SerialInterface::ChangeDevice(SerialInterface::SIDevices::SIDEVICE_GC_GBA_EMULATED, controllerIndex);
+        Config::SetBaseOrCurrent(Config::GetInfoForSIDevice(static_cast<int>(controllerIndex)), SerialInterface::SIDevices::SIDEVICE_GC_CONTROLLER);
+        SerialInterface::ChangeDevice(SerialInterface::SIDevices::SIDEVICE_GC_CONTROLLER, controllerIndex);
     }
+
+    // Finalize device change
+    // SerialInterface::UpdateDevices();
 
     if (GCAdapter::UseAdapter())
     {
@@ -165,7 +168,6 @@ void Instance::PrepareForTASInput()
 
     Movie::SetWiiInputManip([this](WiimoteCommon::DataReportBuilder& rpt, int controllerId, int ext, const WiimoteEmu::EncryptionKey& key)
     {
-
     });
 
     Movie::SetGCInputManip([this](GCPadStatus* padStatus, int controllerId)
@@ -450,11 +452,6 @@ INSTANCE_FUNC_BODY(Instance, FormatMemoryCard, params)
             memcard->Save();
         }
     }
-
-    // TODO: Does this event need to exist?
-    CREATE_TO_SERVER_DATA(OnInstanceMemoryCardFormatted, ipcData, data)
-    data->_slot = params._slot;
-    ipcSendToServer(ipcData);
 
     OnCommandCompleted(DolphinInstanceIpcCall::DolphinInstance_FormatMemoryCard);
 }

@@ -59,11 +59,6 @@ SERVER_FUNC_BODY(MockServer, OnInstanceSaveStateCreated, params)
     std::cout << "save state created " << params._filePathNoExtension << std::endl;
 }
 
-SERVER_FUNC_BODY(MockServer, OnInstanceMemoryCardFormatted, params)
-{
-    std::cout << "memory card formatted" << std::endl;
-}
-
 SERVER_FUNC_BODY(MockServer, OnInstanceRenderGba, params)
 {
 }

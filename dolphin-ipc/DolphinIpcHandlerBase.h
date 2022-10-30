@@ -75,7 +75,6 @@ protected:
 	SERVER_FUNC(OnInstanceTerminated)
 	SERVER_FUNC(OnInstanceRecordingStopped)
 	SERVER_FUNC(OnInstanceSaveStateCreated)
-	SERVER_FUNC(OnInstanceMemoryCardFormatted)
 	SERVER_FUNC(OnInstanceMemoryRead)
 	SERVER_FUNC(OnInstanceMemoryWrite)
 	SERVER_FUNC(OnInstanceRenderGba)

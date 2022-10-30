@@ -20,7 +20,6 @@ enum class DolphinServerIpcCall
 	DolphinServer_OnInstanceTerminated,
 	DolphinServer_OnInstanceRecordingStopped,
 	DolphinServer_OnInstanceSaveStateCreated,
-	DolphinServer_OnInstanceMemoryCardFormatted,
 	DolphinServer_OnInstanceMemoryRead,
 	DolphinServer_OnInstanceMemoryWrite,
 	DolphinServer_OnInstanceRenderGba,
@@ -126,17 +125,6 @@ struct ToServerParams_OnInstanceSaveStateCreated
 	}
 };
 
-struct ToServerParams_OnInstanceMemoryCardFormatted
-{
-	DolphinSlot _slot;
-
-	template <class Archive>
-	void serialize(Archive& ar)
-	{
-		ar(_slot);
-	}
-};
-
 struct ToServerParams_OnInstanceMemoryRead
 {
 	std::vector<unsigned char> _bytes;
@@ -191,7 +179,6 @@ struct DolphinIpcToServerDataParams
 	TO_SERVER_MEMBER(OnInstanceTerminated)
 	TO_SERVER_MEMBER(OnInstanceRecordingStopped)
 	TO_SERVER_MEMBER(OnInstanceSaveStateCreated)
-	TO_SERVER_MEMBER(OnInstanceMemoryCardFormatted)
 	TO_SERVER_MEMBER(OnInstanceMemoryRead)
 	TO_SERVER_MEMBER(OnInstanceMemoryWrite)
 	TO_SERVER_MEMBER(OnInstanceRenderGba)
@@ -224,7 +211,6 @@ struct DolphinIpcToServerData
 			TO_SERVER_ARCHIVE(OnInstanceTerminated)
 			TO_SERVER_ARCHIVE(OnInstanceRecordingStopped)
 			TO_SERVER_ARCHIVE(OnInstanceSaveStateCreated)
-			TO_SERVER_ARCHIVE(OnInstanceMemoryCardFormatted)
 			TO_SERVER_ARCHIVE(OnInstanceMemoryRead)
 			TO_SERVER_ARCHIVE(OnInstanceMemoryWrite)
 			TO_SERVER_ARCHIVE(OnInstanceRenderGba)

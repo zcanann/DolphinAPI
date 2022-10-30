@@ -32,7 +32,6 @@ protected:
 	SERVER_FUNC_OVERRIDE(OnInstanceTerminated)
 	SERVER_FUNC_OVERRIDE(OnInstanceRecordingStopped)
 	SERVER_FUNC_OVERRIDE(OnInstanceSaveStateCreated)
-	SERVER_FUNC_OVERRIDE(OnInstanceMemoryCardFormatted)
 	SERVER_FUNC_OVERRIDE(OnInstanceRenderGba)
 
 private:

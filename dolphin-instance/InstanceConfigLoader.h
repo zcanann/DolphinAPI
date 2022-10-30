@@ -7,16 +7,14 @@
 class InstanceConfigLoader final : public Config::ConfigLayerLoader
 {
 public:
-    explicit InstanceConfigLoader()
-        : ConfigLayerLoader(Config::LayerType::CurrentRun)
-    {
-    }
+    InstanceConfigLoader(std::string memoryCardName);
 
     void Load(Config::Layer* config_layer) override;
     void Save(Config::Layer* config_layer) override;
 
 private:
+    std::string _memoryCardName;
 };
 
 void SaveToDTM();
-std::unique_ptr<Config::ConfigLayerLoader> GenerateInstanceConfigLoader();
+std::unique_ptr<Config::ConfigLayerLoader> GenerateInstanceConfigLoader(std::string memoryCardName);

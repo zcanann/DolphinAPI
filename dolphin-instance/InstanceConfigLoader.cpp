@@ -20,11 +20,16 @@ namespace PowerPC
     enum class CPUCore;
 }
 
+InstanceConfigLoader::InstanceConfigLoader(std::string memoryCardName) : ConfigLayerLoader(Config::LayerType::CurrentRun)
+{
+    _memoryCardName = memoryCardName;
+}
+
 void InstanceConfigLoader::Load(Config::Layer* config_layer)
 {
-    std::string userRoot = File::GetUserPath(D_USER_IDX) + "../MemoryCards";
-    config_layer->Set(Config::MAIN_MEMCARD_A_PATH, userRoot + "/MemoryCardA.raw");
-    config_layer->Set(Config::MAIN_MEMCARD_B_PATH, userRoot + "/MemoryCardB.raw");
+    std::string userRoot = File::GetUserPath(D_USER_IDX) + "../Temp";
+    config_layer->Set(Config::MAIN_MEMCARD_A_PATH, userRoot + "/" + _memoryCardName + "_A.raw");
+    config_layer->Set(Config::MAIN_MEMCARD_B_PATH, userRoot + "/" + _memoryCardName + "_B.raw");
 }
 
 void InstanceConfigLoader::Save(Config::Layer* config_layer)
@@ -32,7 +37,7 @@ void InstanceConfigLoader::Save(Config::Layer* config_layer)
 }
 
 // Loader generation
-std::unique_ptr<Config::ConfigLayerLoader> GenerateInstanceConfigLoader()
+std::unique_ptr<Config::ConfigLayerLoader> GenerateInstanceConfigLoader(std::string memoryCardName)
 {
-    return std::make_unique<InstanceConfigLoader>();
+    return std::make_unique<InstanceConfigLoader>(memoryCardName);
 }

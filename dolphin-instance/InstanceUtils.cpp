@@ -3,12 +3,15 @@
 #include "InputCommon/GCPadStatus.h"
 
 #include "Common/FileUtil.h"
+#include "Common/VariantUtil.h"
 #include "Core/Config/MainSettings.h"
 #include "Core/Config/WiimoteSettings.h"
 #include "Core/ConfigManager.h"
 #include "Core/HW/GCMemcard/GCMemcard.h"
 #include "Core/HW/GCMemcard/GCMemcardUtils.h"
 #include "Core/HW/Memmap.h"
+
+#include <variant>
 
 void InstanceUtils::CopyControllerStateToGcPadStatus(const DolphinControllerState& padState, GCPadStatus* padStatus)
 {
@@ -151,6 +154,37 @@ bool InstanceUtils::ExportGci(DolphinSlot slot, const std::string& filePath)
             }
         }
     }
+
+    return true;
+}
+
+bool InstanceUtils::ImportGci(DolphinSlot slot, const std::string& filePath)
+{
+    if (filePath.empty())
+    {
+        return false;
+    }
+
+    std::string slotPath = InstanceUtils::GetPathForMemoryCardSlot(DolphinSlot::SlotA);
+    std::pair<Memcard::GCMemcardErrorCode, std::optional<Memcard::GCMemcard>> memoryCardOpenInfo = Memcard::GCMemcard::Open(slotPath);
+    Memcard::GCMemcard& memoryCard = memoryCardOpenInfo.second.value();
+    std::variant<Memcard::ReadSavefileErrorCode, Memcard::Savefile> readResult = Memcard::ReadSavefile(filePath);
+
+    bool result = false;
+
+    std::visit(overloaded
+    {
+        [&](Memcard::Savefile gci)
+        {
+            Memcard::GCMemcardImportFileRetVal importResult = memoryCard.ImportFile(gci);
+            result = importResult == Memcard::GCMemcardImportFileRetVal::SUCCESS;
+        },
+        [&](Memcard::ReadSavefileErrorCode error_code)
+        {
+            result = false;
+        },
+    },
+    std::move(readResult));
 
     return true;
 }
