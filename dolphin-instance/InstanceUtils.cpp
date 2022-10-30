@@ -189,6 +189,46 @@ bool InstanceUtils::ImportGci(DolphinSlot slot, const std::string& filePath)
     return true;
 }
 
+bool InstanceUtils::FormatMemoryCard(DolphinSlot slot, CardEncoding encoding, CardSize cardSize)
+{
+
+    std::string slotPath = InstanceUtils::GetPathForMemoryCardSlot(slot);
+
+    if (!slotPath.empty())
+    {
+        if (File::Exists(slotPath))
+        {
+            File::Delete(slotPath);
+        }
+
+        u16 size;
+        switch (cardSize)
+        {
+            case CardSize::GC_4_Mbit_59_Blocks: size = 4; break;
+            case CardSize::GC_8_Mbit_123_Blocks: size = 8; break;
+            case CardSize::GC_16_Mbit_251_Blocks: size = 16; break;
+            case CardSize::GC_32_Mbit_507_Blocks: size = 32; break;
+            case CardSize::GC_64_Mbit_1019_Blocks: size = 64; break;
+            default: case CardSize::GC_128_Mbit_2043_Blocks: size = 128; break;
+        }
+        bool isShiftJis = encoding == CardEncoding::Japanese;
+
+        const CardFlashId flash_id{};
+        const u32 rtc_bias = 0;
+        const u32 sram_language = 0;
+        const u64 format_time = Common::Timer::GetLocalTimeSinceJan1970() - ExpansionInterface::CEXIIPL::GC_EPOCH;
+
+        std::optional<Memcard::GCMemcard> memcard = Memcard::GCMemcard::Create(slotPath, flash_id, size, isShiftJis, rtc_bias, sram_language, format_time);
+
+        if (memcard)
+        {
+            return memcard->Save();
+        }
+    }
+
+    return false;
+}
+
 u32 InstanceUtils::ResolvePointer(u32 address, std::vector<s32> offsets)
 {
     for (unsigned long long offset : offsets)

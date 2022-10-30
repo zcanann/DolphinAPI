@@ -13,6 +13,7 @@ public:
 	static std::string GetPathForMemoryCardSlot(DolphinSlot slot);
 	static bool ExportGci(DolphinSlot slot, const std::string& filePath);
 	static bool ImportGci(DolphinSlot slot, const std::string& filePath);
+	static bool FormatMemoryCard(DolphinSlot slot, CardEncoding encoding, CardSize cardSize);
 
 	static u32 ResolvePointer(u32 address, std::vector<s32> offsets);
 	static std::vector<u8> ReadBytes(u32 address, s32 numberOfBytes);

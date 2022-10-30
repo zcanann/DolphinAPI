@@ -390,10 +390,13 @@ INSTANCE_FUNC_BODY(Instance, CreateSaveState, params)
         State::SaveAs(savFile, true);
 
         // Dump memory card info for this game
-        std::string cardAFile = params._filePathNoExtension + ".cardA.gci";
-        std::string cardBFile = params._filePathNoExtension + ".cardB.gci";
-        InstanceUtils::ExportGci(DolphinSlot::SlotA, cardAFile);
-        InstanceUtils::ExportGci(DolphinSlot::SlotB, cardBFile);
+        if (params._saveMemoryCards)
+        {
+            std::string cardAFile = params._filePathNoExtension + ".cardA.gci";
+            std::string cardBFile = params._filePathNoExtension + ".cardB.gci";
+            InstanceUtils::ExportGci(DolphinSlot::SlotA, cardAFile);
+            InstanceUtils::ExportGci(DolphinSlot::SlotB, cardBFile);
+        }
     }
 
     CREATE_TO_SERVER_DATA(OnInstanceSaveStateCreated, ipcData, data)
@@ -419,39 +422,7 @@ INSTANCE_FUNC_BODY(Instance, LoadSaveState, params)
 
 INSTANCE_FUNC_BODY(Instance, FormatMemoryCard, params)
 {
-    std::string slotPath = InstanceUtils::GetPathForMemoryCardSlot(params._slot);
-
-    if (!slotPath.empty())
-    {
-        if (File::Exists(slotPath))
-        {
-            File::Delete(slotPath);
-        }
-
-        u16 size;
-        switch (params._cardSize)
-        {
-            case ToInstanceParams_FormatMemoryCard::CardSize::GC_4_Mbit_59_Blocks: size = 4; break;
-            case ToInstanceParams_FormatMemoryCard::CardSize::GC_8_Mbit_123_Blocks: size = 8; break;
-            case ToInstanceParams_FormatMemoryCard::CardSize::GC_16_Mbit_251_Blocks: size = 16; break;
-            case ToInstanceParams_FormatMemoryCard::CardSize::GC_32_Mbit_507_Blocks: size = 32; break;
-            case ToInstanceParams_FormatMemoryCard::CardSize::GC_64_Mbit_1019_Blocks: size = 64; break;
-            default: case ToInstanceParams_FormatMemoryCard::CardSize::GC_128_Mbit_2043_Blocks: size = 128; break;
-        }
-        bool isShiftJis = params._encoding == ToInstanceParams_FormatMemoryCard::CardEncoding::Japanese;
-
-        const CardFlashId flash_id{};
-        const u32 rtc_bias = 0;
-        const u32 sram_language = 0;
-        const u64 format_time = Common::Timer::GetLocalTimeSinceJan1970() - ExpansionInterface::CEXIIPL::GC_EPOCH;
-
-        std::optional<Memcard::GCMemcard> memcard = Memcard::GCMemcard::Create(slotPath, flash_id, size, isShiftJis, rtc_bias, sram_language, format_time);
-
-        if (memcard)
-        {
-            memcard->Save();
-        }
-    }
+    InstanceUtils::FormatMemoryCard(params._slot, params._encoding, params._cardSize);
 
     OnCommandCompleted(DolphinInstanceIpcCall::DolphinInstance_FormatMemoryCard);
 }

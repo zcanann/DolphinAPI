@@ -18,16 +18,16 @@ class GBAWidgetController;
 class GBAInstance : public GBAHostInterface
 {
 public:
-  explicit GBAInstance(std::weak_ptr<HW::GBA::Core> core, std::weak_ptr<Instance> instance);
-  ~GBAInstance();
+	explicit GBAInstance(std::weak_ptr<HW::GBA::Core> core, std::weak_ptr<Instance> instance);
+	~GBAInstance();
 
-  void GameChanged() override;
-  void FrameEnded(const std::vector<u32>& video_buffer) override;
+	void GameChanged() override;
+	void FrameEnded(const std::vector<u32>& video_buffer) override;
 
 private:
-  GBAWidgetController* m_widget_controller{};
-  std::weak_ptr<HW::GBA::Core> m_core;
-  std::weak_ptr<Instance> m_instance;
+	GBAWidgetController* m_widget_controller{};
+	std::weak_ptr<HW::GBA::Core> m_core;
+	std::weak_ptr<Instance> m_instance;
 
-  int throttle = 0;
+	int throttle = 0;
 };

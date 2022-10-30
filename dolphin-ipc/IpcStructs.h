@@ -28,6 +28,22 @@ enum class DolphinSlot
     SP1,
 };
 
+enum class CardSize
+{
+    GC_4_Mbit_59_Blocks,
+    GC_8_Mbit_123_Blocks,
+    GC_16_Mbit_251_Blocks,
+    GC_32_Mbit_507_Blocks,
+    GC_64_Mbit_1019_Blocks,
+    GC_128_Mbit_2043_Blocks,
+};
+
+enum class CardEncoding
+{
+    Western,
+    Japanese,
+};
+
 struct DolphinControllerState
 {
     bool Start, A, B, X, Y, Z = false;  // Binary buttons, 6 bits
