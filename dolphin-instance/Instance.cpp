@@ -412,12 +412,37 @@ INSTANCE_FUNC_BODY(Instance, CreateSaveState, params)
 
 INSTANCE_FUNC_BODY(Instance, LoadSaveState, params)
 {
-    if (File::Exists(params._filePath))
+    if (File::Exists(params._saveFilePath))
     {
-        State::LoadAs(params._filePath);
+        State::LoadAs(params._saveFilePath);
+    }
+
+    if (File::Exists(params._optionalMemoryCardDataAPath))
+    {
+        InstanceUtils::ImportGci(DolphinSlot::SlotA, params._optionalMemoryCardDataAPath);
+    }
+
+    if (File::Exists(params._optionalMemoryCardDataBPath))
+    {
+        InstanceUtils::ImportGci(DolphinSlot::SlotB, params._optionalMemoryCardDataBPath);
     }
 
     OnCommandCompleted(DolphinInstanceIpcCall::DolphinInstance_LoadSaveState);
+}
+
+INSTANCE_FUNC_BODY(Instance, LoadMemoryCardData, params)
+{
+    if (File::Exists(params._optionalMemoryCardDataAPath))
+    {
+        InstanceUtils::ImportGci(DolphinSlot::SlotA, params._optionalMemoryCardDataAPath);
+    }
+
+    if (File::Exists(params._optionalMemoryCardDataBPath))
+    {
+        InstanceUtils::ImportGci(DolphinSlot::SlotB, params._optionalMemoryCardDataBPath);
+    }
+
+    OnCommandCompleted(DolphinInstanceIpcCall::DolphinInstance_LoadMemoryCardData);
 }
 
 INSTANCE_FUNC_BODY(Instance, FormatMemoryCard, params)

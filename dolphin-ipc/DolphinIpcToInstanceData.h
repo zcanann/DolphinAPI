@@ -25,6 +25,7 @@ enum class DolphinInstanceIpcCall
 	DolphinInstance_SetTasInput,
 	DolphinInstance_CreateSaveState,
 	DolphinInstance_LoadSaveState,
+	DolphinInstance_LoadMemoryCardData,
 	DolphinInstance_FormatMemoryCard,
 	DolphinInstance_ImportGci,
 	DolphinInstance_ReadMemory,
@@ -155,12 +156,29 @@ struct ToInstanceParams_CreateSaveState
 
 struct ToInstanceParams_LoadSaveState
 {
-	std::string _filePath;
+	std::string _saveFilePath;
+	std::string _optionalMemoryCardDataAPath;
+	std::string _optionalMemoryCardDataBPath;
 
 	template <class Archive>
 	void serialize(Archive& ar)
 	{
-		ar(_filePath);
+		ar(_saveFilePath);
+		ar(_optionalMemoryCardDataAPath);
+		ar(_optionalMemoryCardDataBPath);
+	}
+};
+
+struct ToInstanceParams_LoadMemoryCardData
+{
+	std::string _optionalMemoryCardDataAPath;
+	std::string _optionalMemoryCardDataBPath;
+
+	template <class Archive>
+	void serialize(Archive& ar)
+	{
+		ar(_optionalMemoryCardDataAPath);
+		ar(_optionalMemoryCardDataBPath);
 	}
 };
 
@@ -227,6 +245,7 @@ struct DolphinIpcToInstanceDataParams
 	TO_INSTANCE_MEMBER(SetTasInput)
 	TO_INSTANCE_MEMBER(CreateSaveState)
 	TO_INSTANCE_MEMBER(LoadSaveState)
+	TO_INSTANCE_MEMBER(LoadMemoryCardData)
 	TO_INSTANCE_MEMBER(FormatMemoryCard)
 	TO_INSTANCE_MEMBER(ReadMemory)
 	TO_INSTANCE_MEMBER(WriteMemory)
@@ -264,6 +283,7 @@ struct DolphinIpcToInstanceData
 			TO_INSTANCE_ARCHIVE(SetTasInput)
 			TO_INSTANCE_ARCHIVE(CreateSaveState)
 			TO_INSTANCE_ARCHIVE(LoadSaveState)
+			TO_INSTANCE_ARCHIVE(LoadMemoryCardData)
 			TO_INSTANCE_ARCHIVE(FormatMemoryCard)
 			TO_INSTANCE_ARCHIVE(ReadMemory)
 			TO_INSTANCE_ARCHIVE(WriteMemory)

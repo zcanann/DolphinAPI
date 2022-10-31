@@ -59,6 +59,7 @@ protected:
 	INSTANCE_FUNC(SetTasInput)
 	INSTANCE_FUNC(CreateSaveState)
 	INSTANCE_FUNC(LoadSaveState)
+	INSTANCE_FUNC(LoadMemoryCardData)
 	INSTANCE_FUNC(FormatMemoryCard)
 	INSTANCE_FUNC(ReadMemory)
 	INSTANCE_FUNC(WriteMemory)
