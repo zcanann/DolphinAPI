@@ -44,24 +44,28 @@ enum class CardEncoding
     Japanese,
 };
 
-enum class GameCubeEventFlags
-{
-    None            = 0,
-    OpenDiscCover   = 1,
-    DiscChange      = 2,
-    ConsoleReset    = 4,
-
-    // Because these are flags, these are sorted by priority (high => low)
-    ChangeControllerGC  = 8,
-    ChangeControllerGBA = 16,
-    ChangeControllerWii = 32,
-    ChangeControllerBongos = 64,
-
-    // Important: This is currently intended to fit inside a byte, so do not add any enums > 128
-};
-
 struct DolphinControllerState
 {
+    enum class ControllerChangeEvent
+    {
+        None,
+        ChangeControllerNoDevice,
+        ChangeControllerGC,
+        ChangeControllerGBA,
+        ChangeControllerBongos,
+        ChangeControllerSteering,
+        ChangeControllerDanceMat,
+        ChangeControllerKeyboard,
+    };
+
+    enum class GameCubeEventFlags
+    {
+        None = 0,
+        OpenDiscCover = 1,
+        DiscChange = 2,
+        ConsoleReset = 4,
+    };
+
     bool Start, A, B, X, Y, Z = false;  // Binary buttons, 6 bits
     bool DPadUp, DPadDown, DPadLeft, DPadRight = false; // Binary D-Pad buttons, 4 bits
     bool L, R = false;          // Binary triggers, 2 bits
@@ -70,6 +74,7 @@ struct DolphinControllerState
     unsigned char CStickX, CStickY = 0;            // Sub-Stick, 8 bits
     bool GetOrigin = false;     // Special bit to indicate analog origin reset
     bool IsConnected = false;   // Should controller be treated as connected
+    ControllerChangeEvent ControllerChange = ControllerChangeEvent::None; // Controller change events
     GameCubeEventFlags GameCubeEvents = GameCubeEventFlags::None; // Special hardware events
 
     template <class Archive>
@@ -95,6 +100,7 @@ struct DolphinControllerState
         ar(CStickY);
         ar(GetOrigin);
         ar(IsConnected);
+        ar(ControllerChange);
         ar(GameCubeEvents);
     }
 };
@@ -139,6 +145,7 @@ struct DolphinInputRecording
     std::vector<AnalogRunLengthEncoded> CStickX, CStickY;
     std::vector<ButtonRunLengthEncoded> GetOrigin;
     std::vector<ButtonRunLengthEncoded> IsConnected;
+    std::vector<AnalogRunLengthEncoded> ControllerChange;
     std::vector<AnalogRunLengthEncoded> GameCubeEvents;
 
     bool VerifyIntegrity() const
@@ -163,6 +170,7 @@ struct DolphinInputRecording
             , AnalogRLESum(CStickY)
             , ButtonRLESum(GetOrigin)
             , ButtonRLESum(IsConnected)
+            , AnalogRLESum(ControllerChange)
             , AnalogRLESum(GameCubeEvents)
         );
     }
@@ -197,7 +205,8 @@ struct DolphinInputRecording
         Result.CStickY = PopNextAnalogState(CStickY);
         Result.GetOrigin = PopNextButtonState(GetOrigin);
         Result.IsConnected = PopNextButtonState(IsConnected);
-        Result.GameCubeEvents = (GameCubeEventFlags)PopNextAnalogState(GameCubeEvents);
+        Result.ControllerChange = (DolphinControllerState::ControllerChangeEvent)PopNextAnalogState(ControllerChange);
+        Result.GameCubeEvents = (DolphinControllerState::GameCubeEventFlags)PopNextAnalogState(GameCubeEvents);
 
         return Result;
     }
@@ -224,6 +233,7 @@ struct DolphinInputRecording
         PushAnalogState(CStickY, InputState.CStickY);
         PushButtonState(GetOrigin, InputState.GetOrigin);
         PushButtonState(IsConnected, InputState.IsConnected);
+        PushAnalogState(ControllerChange, (unsigned char)InputState.ControllerChange);
         PushAnalogState(GameCubeEvents, (unsigned char)InputState.GameCubeEvents);
     }
 
@@ -249,6 +259,7 @@ struct DolphinInputRecording
         CStickY.clear();
         GetOrigin.clear();
         IsConnected.clear();
+        ControllerChange.clear();
         GameCubeEvents.clear();
     }
 

@@ -216,7 +216,7 @@ void Instance::PrepareForTASInput()
 
                 InstanceUtils::CopyControllerStateToGcPadStatus(padState, padStatus);
 
-                if ((int(padState.GameCubeEvents) & int(GameCubeEventFlags::OpenDiscCover)) == 0)
+                if ((int(padState.GameCubeEvents) & int(DolphinControllerState::GameCubeEventFlags::OpenDiscCover)) == 0)
                 {
                     Core::RunAsCPUThread([=]
                     {
@@ -224,7 +224,7 @@ void Instance::PrepareForTASInput()
                     });
                 }
 
-                if ((int(padState.GameCubeEvents) & int(GameCubeEventFlags::DiscChange)) == 0)
+                if ((int(padState.GameCubeEvents) & int(DolphinControllerState::GameCubeEventFlags::DiscChange)) == 0)
                 {
                     Core::RunAsCPUThread([=]
                     {
@@ -233,31 +233,25 @@ void Instance::PrepareForTASInput()
                     });
                 }
 
-                if ((int(padState.GameCubeEvents) & int(GameCubeEventFlags::ConsoleReset)) == 0)
+                if ((int(padState.GameCubeEvents) & int(DolphinControllerState::GameCubeEventFlags::ConsoleReset)) == 0)
                 {
                     ProcessorInterface::ResetButton_Tap();
                 }
 
-                // Only one device change is allowed per-frame. Sorted by an arbitrary priority.
-                if ((int(padState.GameCubeEvents)
-                    & int(GameCubeEventFlags::ChangeControllerGC)
-                    | int(GameCubeEventFlags::ChangeControllerGBA)
-                    | int(GameCubeEventFlags::ChangeControllerWii)
-                    | int(GameCubeEventFlags::ChangeControllerBongos)) == 0)
+                // Process device change requests
+                if (padState.ControllerChange != DolphinControllerState::ControllerChangeEvent::None)
                 {
-                    SerialInterface::SIDevices newDevice = SerialInterface::SIDevices::SIDEVICE_GC_CONTROLLER;
+                    SerialInterface::SIDevices newDevice;
 
-                    if ((int(padState.GameCubeEvents) & int(GameCubeEventFlags::ChangeControllerGC)) == 0)
+                    switch (padState.ControllerChange)
                     {
-                        newDevice = SerialInterface::SIDevices::SIDEVICE_GC_CONTROLLER;
-                    }
-                    else if ((int(padState.GameCubeEvents) & int(GameCubeEventFlags::ChangeControllerGBA)) == 0)
-                    {
-                        newDevice = SerialInterface::SIDevices::SIDEVICE_GC_GBA_EMULATED;
-                    }
-                    else if ((int(padState.GameCubeEvents) & int(GameCubeEventFlags::ChangeControllerBongos)) == 0)
-                    {
-                        newDevice = SerialInterface::SIDevices::SIDEVICE_GC_TARUKONGA;
+                        default:
+                        case DolphinControllerState::ControllerChangeEvent::ChangeControllerGC: newDevice = SerialInterface::SIDevices::SIDEVICE_GC_CONTROLLER; break;
+                        case DolphinControllerState::ControllerChangeEvent::ChangeControllerGBA: newDevice = SerialInterface::SIDevices::SIDEVICE_GC_CONTROLLER; break;
+                        case DolphinControllerState::ControllerChangeEvent::ChangeControllerBongos: newDevice = SerialInterface::SIDevices::SIDEVICE_DANCEMAT; break;
+                        case DolphinControllerState::ControllerChangeEvent::ChangeControllerDanceMat: newDevice = SerialInterface::SIDevices::SIDEVICE_GC_TARUKONGA; break;
+                        case DolphinControllerState::ControllerChangeEvent::ChangeControllerSteering: newDevice = SerialInterface::SIDevices::SIDEVICE_GC_STEERING; break;
+                        case DolphinControllerState::ControllerChangeEvent::ChangeControllerNoDevice: newDevice = SerialInterface::SIDevices::SIDEVICE_NONE; break;
                     }
 
                     Config::SetBaseOrCurrent(Config::GetInfoForSIDevice(static_cast<int>(controllerId)), newDevice);
