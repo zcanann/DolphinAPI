@@ -198,6 +198,7 @@ void Instance::PrepareForTASInput()
         }
 
         // Update stored hardware input states
+        // TODO: How to handle console events / device changes?
         InstanceUtils::CopyGcPadStatusToControllerState(padStatus, _hardwareInputStates[controllerId]);
 
         // Record or playback
@@ -215,21 +216,55 @@ void Instance::PrepareForTASInput()
 
                 InstanceUtils::CopyControllerStateToGcPadStatus(padState, padStatus);
 
-                if (padState.Disc)
+                if ((int(padState.GameCubeEvents) & int(GameCubeEventFlags::OpenDiscCover)) == 0)
                 {
                     Core::RunAsCPUThread([=]
                     {
-                        if (!DVDInterface::AutoChangeDisc())
-                        {
-                            CPU::Break();
-                            Log(Common::Log::LogLevel::LWARNING, "Disc change"); // PanicAlertFmtT("Change the disc to {0}", s_discChange);
-                        }
+                        DVDInterface::EjectDisc(DVDInterface::EjectCause::User);
                     });
                 }
 
-                if (padState.Reset)
+                if ((int(padState.GameCubeEvents) & int(GameCubeEventFlags::DiscChange)) == 0)
+                {
+                    Core::RunAsCPUThread([=]
+                    {
+                        // TODO: We need to encode the path for this somehow or another
+                        DVDInterface::ChangeDisc("TODO");
+                    });
+                }
+
+                if ((int(padState.GameCubeEvents) & int(GameCubeEventFlags::ConsoleReset)) == 0)
                 {
                     ProcessorInterface::ResetButton_Tap();
+                }
+
+                // Only one device change is allowed per-frame. Sorted by an arbitrary priority.
+                if ((int(padState.GameCubeEvents)
+                    & int(GameCubeEventFlags::ChangeControllerGC)
+                    | int(GameCubeEventFlags::ChangeControllerGBA)
+                    | int(GameCubeEventFlags::ChangeControllerWii)
+                    | int(GameCubeEventFlags::ChangeControllerBongos)) == 0)
+                {
+                    SerialInterface::SIDevices newDevice = SerialInterface::SIDevices::SIDEVICE_GC_CONTROLLER;
+
+                    if ((int(padState.GameCubeEvents) & int(GameCubeEventFlags::ChangeControllerGC)) == 0)
+                    {
+                        newDevice = SerialInterface::SIDevices::SIDEVICE_GC_CONTROLLER;
+                    }
+                    else if ((int(padState.GameCubeEvents) & int(GameCubeEventFlags::ChangeControllerGBA)) == 0)
+                    {
+                        newDevice = SerialInterface::SIDevices::SIDEVICE_GC_GBA_EMULATED;
+                    }
+                    else if ((int(padState.GameCubeEvents) & int(GameCubeEventFlags::ChangeControllerBongos)) == 0)
+                    {
+                        newDevice = SerialInterface::SIDevices::SIDEVICE_GC_TARUKONGA;
+                    }
+
+                    Config::SetBaseOrCurrent(Config::GetInfoForSIDevice(static_cast<int>(controllerId)), newDevice);
+                    SerialInterface::ChangeDevice(newDevice, controllerId);
+
+                    // Finalize device change
+                    SerialInterface::UpdateDevices();
                 }
                 
                 // Inputs complete! Ready for next command

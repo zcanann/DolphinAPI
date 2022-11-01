@@ -78,9 +78,6 @@ void InstanceUtils::CopyGcPadStatusToControllerState(GCPadStatus* padStatus, Dol
     padState.IsConnected = padStatus->isConnected;
 
     padState.GetOrigin = (padStatus->button & PAD_GET_ORIGIN) != 0;
-
-    padState.Disc = false; // TODO
-    padState.Reset = false; // TODO
 }
 
 std::string InstanceUtils::GetPathForMemoryCardSlot(DolphinSlot slot)

@@ -44,18 +44,33 @@ enum class CardEncoding
     Japanese,
 };
 
+enum class GameCubeEventFlags
+{
+    None            = 0,
+    OpenDiscCover   = 1,
+    DiscChange      = 2,
+    ConsoleReset    = 4,
+
+    // Because these are flags, these are sorted by priority (high => low)
+    ChangeControllerGC  = 8,
+    ChangeControllerGBA = 16,
+    ChangeControllerWii = 32,
+    ChangeControllerBongos = 64,
+
+    // Important: This is currently intended to fit inside a byte, so do not add any enums > 128
+};
+
 struct DolphinControllerState
 {
     bool Start, A, B, X, Y, Z = false;  // Binary buttons, 6 bits
     bool DPadUp, DPadDown, DPadLeft, DPadRight = false; // Binary D-Pad buttons, 4 bits
     bool L, R = false;          // Binary triggers, 2 bits
-    bool Disc = false;          // Checks for disc being changed
-    bool Reset = false;         // Console reset button
-    bool IsConnected = false;   // Should controller be treated as connected
-    bool GetOrigin = false;     // Special bit to indicate analog origin reset
     unsigned char TriggerL, TriggerR = 0;          // Triggers, 8 bits
     unsigned char AnalogStickX, AnalogStickY = 0;  // Main Stick, 8 bits
     unsigned char CStickX, CStickY = 0;            // Sub-Stick, 8 bits
+    bool GetOrigin = false;     // Special bit to indicate analog origin reset
+    bool IsConnected = false;   // Should controller be treated as connected
+    GameCubeEventFlags GameCubeEvents = GameCubeEventFlags::None; // Special hardware events
 
     template <class Archive>
     void serialize(Archive& ar)
@@ -72,16 +87,15 @@ struct DolphinControllerState
         ar(DPadRight);
         ar(L);
         ar(R);
-        ar(Disc);
-        ar(Reset);
-        ar(IsConnected);
-        ar(GetOrigin);
         ar(TriggerL);
         ar(TriggerR);
         ar(AnalogStickX);
         ar(AnalogStickY);
         ar(CStickX);
         ar(CStickY);
+        ar(GetOrigin);
+        ar(IsConnected);
+        ar(GameCubeEvents);
     }
 };
 
@@ -120,13 +134,12 @@ struct DolphinInputRecording
     std::vector<ButtonRunLengthEncoded> Start, A, B, X, Y, Z;
     std::vector<ButtonRunLengthEncoded> DPadUp, DPadDown, DPadLeft, DPadRight;
     std::vector<ButtonRunLengthEncoded> L, R;
-    std::vector<ButtonRunLengthEncoded> Disc;
-    std::vector<ButtonRunLengthEncoded> Reset;
-    std::vector<ButtonRunLengthEncoded> IsConnected;
-    std::vector<ButtonRunLengthEncoded> GetOrigin;
     std::vector<AnalogRunLengthEncoded> TriggerL, TriggerR;
     std::vector<AnalogRunLengthEncoded> AnalogStickX, AnalogStickY;
     std::vector<AnalogRunLengthEncoded> CStickX, CStickY;
+    std::vector<ButtonRunLengthEncoded> GetOrigin;
+    std::vector<ButtonRunLengthEncoded> IsConnected;
+    std::vector<AnalogRunLengthEncoded> GameCubeEvents;
 
     bool VerifyIntegrity() const
     {
@@ -142,16 +155,15 @@ struct DolphinInputRecording
             , ButtonRLESum(DPadRight)
             , ButtonRLESum(L)
             , ButtonRLESum(R)
-            , ButtonRLESum(Disc)
-            , ButtonRLESum(Reset)
-            , ButtonRLESum(IsConnected)
-            , ButtonRLESum(GetOrigin)
             , AnalogRLESum(TriggerL)
             , AnalogRLESum(TriggerR)
             , AnalogRLESum(AnalogStickX)
             , AnalogRLESum(AnalogStickY)
             , AnalogRLESum(CStickX)
             , AnalogRLESum(CStickY)
+            , ButtonRLESum(GetOrigin)
+            , ButtonRLESum(IsConnected)
+            , AnalogRLESum(GameCubeEvents)
         );
     }
 
@@ -177,16 +189,15 @@ struct DolphinInputRecording
         Result.DPadRight = PopNextButtonState(DPadRight);
         Result.L = PopNextButtonState(L);
         Result.R = PopNextButtonState(R);
-        Result.Disc = PopNextButtonState(Disc);
-        Result.Reset = PopNextButtonState(Reset);
-        Result.IsConnected = PopNextButtonState(IsConnected);
-        Result.GetOrigin = PopNextButtonState(GetOrigin);
         Result.TriggerL = PopNextAnalogState(TriggerL);
         Result.TriggerR = PopNextAnalogState(TriggerR);
         Result.AnalogStickX = PopNextAnalogState(AnalogStickX);
         Result.AnalogStickY = PopNextAnalogState(AnalogStickY);
         Result.CStickX = PopNextAnalogState(CStickX);
         Result.CStickY = PopNextAnalogState(CStickY);
+        Result.GetOrigin = PopNextButtonState(GetOrigin);
+        Result.IsConnected = PopNextButtonState(IsConnected);
+        Result.GameCubeEvents = (GameCubeEventFlags)PopNextAnalogState(GameCubeEvents);
 
         return Result;
     }
@@ -205,16 +216,15 @@ struct DolphinInputRecording
         PushButtonState(DPadRight, InputState.DPadRight);
         PushButtonState(L, InputState.L);
         PushButtonState(R, InputState.R);
-        PushButtonState(Disc, InputState.Disc);
-        PushButtonState(Reset, InputState.Reset);
-        PushButtonState(IsConnected, InputState.IsConnected);
-        PushButtonState(GetOrigin, InputState.GetOrigin);
         PushAnalogState(TriggerL, InputState.TriggerL);
         PushAnalogState(TriggerR, InputState.TriggerR);
         PushAnalogState(AnalogStickX, InputState.AnalogStickX);
         PushAnalogState(AnalogStickY, InputState.AnalogStickY);
         PushAnalogState(CStickX, InputState.CStickX);
         PushAnalogState(CStickY, InputState.CStickY);
+        PushButtonState(GetOrigin, InputState.GetOrigin);
+        PushButtonState(IsConnected, InputState.IsConnected);
+        PushAnalogState(GameCubeEvents, (unsigned char)InputState.GameCubeEvents);
     }
 
     void Clear()
@@ -231,16 +241,15 @@ struct DolphinInputRecording
         DPadRight.clear();
         L.clear();
         R.clear();
-        Disc.clear();
-        Reset.clear();
-        IsConnected.clear();
-        GetOrigin.clear();
         TriggerL.clear();
         TriggerR.clear();
         AnalogStickX.clear();
         AnalogStickY.clear();
         CStickX.clear();
         CStickY.clear();
+        GetOrigin.clear();
+        IsConnected.clear();
+        GameCubeEvents.clear();
     }
 
     int Size() const
@@ -263,16 +272,15 @@ struct DolphinInputRecording
         ar(DPadRight);
         ar(L);
         ar(R);
-        ar(Disc);
-        ar(Reset);
-        ar(IsConnected);
-        ar(GetOrigin);
         ar(TriggerL);
         ar(TriggerR);
         ar(AnalogStickX);
         ar(AnalogStickY);
         ar(CStickX);
         ar(CStickY);
+        ar(GetOrigin);
+        ar(IsConnected);
+        ar(GameCubeEvents);
     }
 
 private:
