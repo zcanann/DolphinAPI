@@ -39,6 +39,8 @@
 #include "InputCommon/InputConfig.h"
 #include "VideoCommon/VideoConfig.h"
 
+#pragma optimize("", off)
+
 Instance::Instance(const InstanceBootParameters& bootParams)
 {
     InitializeLaunchOptions(bootParams);
@@ -145,8 +147,6 @@ void Instance::PrepareForTASInput()
 
     for (int controllerIndex = 0; controllerIndex < SerialInterface::MAX_SI_CHANNELS; controllerIndex++)
     {
-        // SIDEVICE_GC_CONTROLLER
-        // SIDEVICE_GC_GBA_EMULATED
         Config::SetBaseOrCurrent(Config::GetInfoForSIDevice(static_cast<int>(controllerIndex)), SerialInterface::SIDevices::SIDEVICE_GC_CONTROLLER);
         SerialInterface::ChangeDevice(SerialInterface::SIDevices::SIDEVICE_GC_CONTROLLER, controllerIndex);
     }
@@ -172,51 +172,33 @@ void Instance::PrepareForTASInput()
 
     Movie::SetGCInputManip([this](GCPadStatus* padStatus, int controllerId)
     {
-        if (controllerId < 0 || controllerId > 3)
+        static const int FIRST_CONTROLLER = 0;
+        static const int LAST_CONTROLLER = 3;
+
+        if (controllerId < FIRST_CONTROLLER || controllerId > LAST_CONTROLLER)
         {
             Log(Common::Log::LogLevel::LERROR, "Unexpected controller id");
         }
-
-        // Perform frame advance
-        if (_framesToAdvance > 0)
-        {
-            if (!_shouldUseHardwareController)
-            {
-                // Replace hardware input with TAS input
-                InstanceUtils::CopyControllerStateToGcPadStatus(_tasInputStates[controllerId], padStatus);
-            }
-
-            if (--_framesToAdvance <= 0)
-            {
-                Core::QueueHostJob([=]
-                {
-                    Core::SetState(Core::State::Paused);
-                });
-
-                OnCommandCompleted(DolphinInstanceIpcCall::DolphinInstance_FrameAdvance);
-            }
-        }
-
-        // Update stored hardware input states
-        // TODO: How to handle console events / device changes?
-        InstanceUtils::CopyGcPadStatusToControllerState(padStatus, _hardwareInputStates[controllerId]);
 
         // Record or playback
         switch (_instanceState)
         {
             case RecordingState::Playback:
             {
+                if (controllerId == LAST_CONTROLLER)
+                {
+                    CheckGcFrameAdvance(padStatus, controllerId, false);
+                }
+
                 if (!_playbackInputs[controllerId].HasNext())
                 {
-                    Log(Common::Log::LogLevel::LERROR, "Unexpected end of playback input");
+                    // Log(Common::Log::LogLevel::LERROR, "Unexpected end of playback input");
                     return;
                 }
 
                 DolphinControllerState padState = _playbackInputs[controllerId].PopNext();
 
-                InstanceUtils::CopyControllerStateToGcPadStatus(padState, padStatus);
-
-                if ((int(padState.GameCubeEvents) & int(DolphinControllerState::GameCubeEventFlags::OpenDiscCover)) == 0)
+                if ((int(padState.GameCubeEvents) & int(DolphinControllerState::GameCubeEventFlags::OpenDiscCover)) != 0)
                 {
                     Core::RunAsCPUThread([=]
                     {
@@ -224,7 +206,7 @@ void Instance::PrepareForTASInput()
                     });
                 }
 
-                if ((int(padState.GameCubeEvents) & int(DolphinControllerState::GameCubeEventFlags::DiscChange)) == 0)
+                if ((int(padState.GameCubeEvents) & int(DolphinControllerState::GameCubeEventFlags::DiscChange)) != 0)
                 {
                     Core::RunAsCPUThread([=]
                     {
@@ -233,7 +215,7 @@ void Instance::PrepareForTASInput()
                     });
                 }
 
-                if ((int(padState.GameCubeEvents) & int(DolphinControllerState::GameCubeEventFlags::ConsoleReset)) == 0)
+                if ((int(padState.GameCubeEvents) & int(DolphinControllerState::GameCubeEventFlags::ConsoleReset)) != 0)
                 {
                     ProcessorInterface::ResetButton_Tap();
                 }
@@ -247,7 +229,7 @@ void Instance::PrepareForTASInput()
                     {
                         default:
                         case DolphinControllerState::ControllerChangeEvent::ChangeControllerGC: newDevice = SerialInterface::SIDevices::SIDEVICE_GC_CONTROLLER; break;
-                        case DolphinControllerState::ControllerChangeEvent::ChangeControllerGBA: newDevice = SerialInterface::SIDevices::SIDEVICE_GC_CONTROLLER; break;
+                        case DolphinControllerState::ControllerChangeEvent::ChangeControllerGBA: newDevice = SerialInterface::SIDevices::SIDEVICE_GC_GBA_EMULATED; break;
                         case DolphinControllerState::ControllerChangeEvent::ChangeControllerBongos: newDevice = SerialInterface::SIDevices::SIDEVICE_DANCEMAT; break;
                         case DolphinControllerState::ControllerChangeEvent::ChangeControllerDanceMat: newDevice = SerialInterface::SIDevices::SIDEVICE_GC_TARUKONGA; break;
                         case DolphinControllerState::ControllerChangeEvent::ChangeControllerSteering: newDevice = SerialInterface::SIDevices::SIDEVICE_GC_STEERING; break;
@@ -260,6 +242,9 @@ void Instance::PrepareForTASInput()
                     // Finalize device change
                     SerialInterface::UpdateDevices();
                 }
+
+                // Presumably it makes sense to copy the playback inputs after changing controller devices is complete
+                InstanceUtils::CopyControllerStateToGcPadStatus(padState, padStatus);
                 
                 // Inputs complete! Ready for next command
                 if (!_playbackInputs[controllerId].HasNext())
@@ -267,14 +252,19 @@ void Instance::PrepareForTASInput()
                     Core::QueueHostJob([=]
                     {
                         Core::SetState(Core::State::Paused);
+                        OnCommandCompleted(DolphinInstanceIpcCall::DolphinInstance_PlayInputs);
                     });
                     _instanceState = RecordingState::None;
-                    OnCommandCompleted(DolphinInstanceIpcCall::DolphinInstance_PlayInputs);
                 }
                 break;
             }
             case RecordingState::Recording:
             {
+                if (controllerId == LAST_CONTROLLER)
+                {
+                    CheckGcFrameAdvance(padStatus, controllerId, false);
+                }
+
                 if (_isRecordingController[controllerId])
                 {
                     _recordingInputs[controllerId].PushNext(_hardwareInputStates[controllerId]);
@@ -284,10 +274,42 @@ void Instance::PrepareForTASInput()
             case RecordingState::None:
             default:
             {
+                if (controllerId == LAST_CONTROLLER)
+                {
+                    CheckGcFrameAdvance(padStatus, controllerId, false);
+                }
                 break;
             }
         }
     });
+}
+
+void Instance::CheckGcFrameAdvance(GCPadStatus* padStatus, int controllerId, bool checkInputs)
+{
+    // Perform frame advance
+    if (_framesToAdvance > 0)
+    {
+        if (checkInputs && !_shouldUseHardwareController)
+        {
+            // Replace hardware input with TAS input
+            InstanceUtils::CopyControllerStateToGcPadStatus(_tasInputStates[controllerId], padStatus);
+        }
+
+        if (--_framesToAdvance <= 0)
+        {
+            Core::QueueHostJob([=]
+            {
+                Core::SetState(Core::State::Paused);
+                OnCommandCompleted(DolphinInstanceIpcCall::DolphinInstance_FrameAdvance);
+            });
+        }
+    }
+
+    // Update stored input states, which will be applied to the game and potentially recordings (either from TAS input or hardware controller)
+    if (checkInputs)
+    {
+        InstanceUtils::CopyGcPadStatusToControllerState(padStatus, _hardwareInputStates[controllerId]);
+    }
 }
 
 INSTANCE_FUNC_BODY(Instance, Connect, params)
@@ -375,7 +397,8 @@ INSTANCE_FUNC_BODY(Instance, PlayInputs, params)
     {
         Core::SetState(Core::State::Running);
     }
-
+    
+    // This checks if any controllers have inputs. HasNext() is fine to call because nothing has been popped yet.
     if (!_playbackInputs[0].HasNext()
         && !_playbackInputs[1].HasNext()
         && !_playbackInputs[2].HasNext()
@@ -595,3 +618,5 @@ void Instance::RequestShutdown()
 {
     _shutdown_requested.Set();
 }
+
+#pragma optimize("", on)

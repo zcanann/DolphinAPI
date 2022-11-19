@@ -67,23 +67,24 @@ public:
 #endif
 
 protected:
-	INSTANCE_FUNC_OVERRIDE(Connect)
-	INSTANCE_FUNC_OVERRIDE(Heartbeat)
-	INSTANCE_FUNC_OVERRIDE(Terminate)
-	INSTANCE_FUNC_OVERRIDE(StartRecordingInput)
-	INSTANCE_FUNC_OVERRIDE(StopRecordingInput)
-	INSTANCE_FUNC_OVERRIDE(PauseEmulation)
-	INSTANCE_FUNC_OVERRIDE(ResumeEmulation)
-	INSTANCE_FUNC_OVERRIDE(PlayInputs)
-	INSTANCE_FUNC_OVERRIDE(FrameAdvance)
-	INSTANCE_FUNC_OVERRIDE(SetTasInput)
-	INSTANCE_FUNC_OVERRIDE(CreateSaveState)
-	INSTANCE_FUNC_OVERRIDE(LoadSaveState)
-	INSTANCE_FUNC_OVERRIDE(LoadMemoryCardData)
-	INSTANCE_FUNC_OVERRIDE(FormatMemoryCard)
-	INSTANCE_FUNC_OVERRIDE(ReadMemory)
-	INSTANCE_FUNC_OVERRIDE(WriteMemory)
+	INSTANCE_FUNC_OVERRIDE(Connect);
+	INSTANCE_FUNC_OVERRIDE(Heartbeat);
+	INSTANCE_FUNC_OVERRIDE(Terminate);
+	INSTANCE_FUNC_OVERRIDE(StartRecordingInput);
+	INSTANCE_FUNC_OVERRIDE(StopRecordingInput);
+	INSTANCE_FUNC_OVERRIDE(PauseEmulation);
+	INSTANCE_FUNC_OVERRIDE(ResumeEmulation);
+	INSTANCE_FUNC_OVERRIDE(PlayInputs);
+	INSTANCE_FUNC_OVERRIDE(FrameAdvance);
+	INSTANCE_FUNC_OVERRIDE(SetTasInput);
+	INSTANCE_FUNC_OVERRIDE(CreateSaveState);
+	INSTANCE_FUNC_OVERRIDE(LoadSaveState);
+	INSTANCE_FUNC_OVERRIDE(LoadMemoryCardData);
+	INSTANCE_FUNC_OVERRIDE(FormatMemoryCard);
+	INSTANCE_FUNC_OVERRIDE(ReadMemory);
+	INSTANCE_FUNC_OVERRIDE(WriteMemory);
 
+	void CheckGcFrameAdvance(GCPadStatus* padStatus, int controllerId, bool checkInputs);
 	void UpdateRunningFlag();
 	void StartRecording();
 	void StopRecording();

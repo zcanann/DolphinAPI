@@ -164,6 +164,12 @@ bool InstanceUtils::ImportGci(DolphinSlot slot, const std::string& filePath)
 
     std::string slotPath = InstanceUtils::GetPathForMemoryCardSlot(DolphinSlot::SlotA);
     std::pair<Memcard::GCMemcardErrorCode, std::optional<Memcard::GCMemcard>> memoryCardOpenInfo = Memcard::GCMemcard::Open(slotPath);
+
+    if (!memoryCardOpenInfo.second.has_value())
+    {
+        return false;
+    }
+
     Memcard::GCMemcard& memoryCard = memoryCardOpenInfo.second.value();
     std::variant<Memcard::ReadSavefileErrorCode, Memcard::Savefile> readResult = Memcard::ReadSavefile(filePath);
 
