@@ -260,14 +260,17 @@ std::vector<u8> InstanceUtils::ReadBytes(u32 address, s32 numberOfBytes)
     return bytes;
 }
 
-void InstanceUtils::WriteBytes(u32 address, std::vector<u8> bytes)
+bool InstanceUtils::WriteBytes(u32 address, std::vector<u8> bytes)
 {
     void* pointer = InstanceUtils::GetPointerForRange(address, bytes.size());
 
     if (pointer)
     {
         memcpy(pointer, bytes.data(), bytes.size());
+        return true;
     }
+
+    return false;
 }
 
 u8* InstanceUtils::GetPointerForRange(u32 address, size_t size)

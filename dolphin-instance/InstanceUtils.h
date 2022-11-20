@@ -17,7 +17,7 @@ public:
 
 	static u32 ResolvePointer(u32 address, std::vector<s32> offsets);
 	static std::vector<u8> ReadBytes(u32 address, s32 numberOfBytes);
-	static void WriteBytes(u32 address, std::vector<u8> bytes);
+	static bool WriteBytes(u32 address, std::vector<u8> bytes);
 
 private:
 	static u8* GetPointerForRange(u32 address, size_t size);

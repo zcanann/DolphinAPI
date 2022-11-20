@@ -519,7 +519,9 @@ INSTANCE_FUNC_BODY(Instance, WriteMemory, params)
 {
     u32 address = InstanceUtils::ResolvePointer(params._address, params._pointerOffsets);
 
-    InstanceUtils::WriteBytes(address, params._bytes);
+    CREATE_TO_SERVER_DATA(OnInstanceMemoryWrite, ipcData, data)
+    data->_success = InstanceUtils::WriteBytes(address, params._bytes);
+    ipcSendToServer(ipcData);
 
     OnCommandCompleted(DolphinInstanceIpcCall::DolphinInstance_WriteMemory);
 }
